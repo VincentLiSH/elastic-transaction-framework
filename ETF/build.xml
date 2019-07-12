@@ -13,7 +13,9 @@
 
 	<target name="help">
 		<echo message="~~~~~~~~~~~~~~构建命令说明~~~~~~~~~~~~~~" />
-		<echo message="war-test" />
+		<echo message="clean" />
+		<echo message="test" />
+		<echo message="jar" />
 	</target>
 
 	<target name="resolve" description="-- parse ivy.xml">
