@@ -1,0 +1,47 @@
+<ivy-module version="1.0" xmlns:m="http://ant.apache.org/ivy/extra">
+	<info organisation="cn.panshi" module="etf" />
+	<configurations>
+		<conf name="default" visibility="public" extends="runtime,master" />
+		<conf name="master" visibility="public" />
+		<conf name="compile" visibility="public" />
+		<conf name="provided" visibility="public" />
+		<conf name="runtime" visibility="public" extends="compile" />
+		<conf name="test" visibility="private" extends="runtime" />
+	</configurations>
+	
+	<publications>
+   	 	<artifact type="pom" ext="pom" conf="default"/>
+    	<artifact type="jar" ext="jar" conf="default"/>
+  	</publications>
+
+	<dependencies defaultconfmapping="compile->compile(*),master(*);runtime->master(*),compile(*),runtime(*)">
+
+		<dependency org="org.apache.commons" name="commons-lang3" rev="3.1" conf="compile;runtime" />
+
+		<dependency org="log4j" name="log4j" rev="1.2.17" conf="compile;runtime" />
+
+		<dependency org="com.fasterxml.jackson.core" name="jackson-core" rev="2.9.7" conf="compile;runtime" />
+		<dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.9.7" conf="compile;runtime" />
+
+		<dependency org="redis.clients" name="jedis" rev="2.9.0" conf="compile;runtime" />
+		<dependency org="org.springframework.data" name="spring-data-redis" rev="1.8.5.RELEASE" conf="compile;runtime" />
+		
+		<dependency org="org.springframework" name="spring-core" rev="${spring.version}" conf="compile;runtime" />
+		<dependency org="org.springframework" name="spring-beans" rev="${spring.version}" conf="compile;runtime" />
+		<dependency org="org.springframework" name="spring-context" rev="${spring.version}" conf="compile;runtime" />
+		<dependency org="org.springframework" name="spring-context-support" rev="${spring.version}" conf="compile;runtime" />
+		<dependency org="org.springframework" name="spring-expression" rev="${spring.version}" conf="compile;runtime" />
+		<dependency org="org.springframework" name="spring-aop" rev="${spring.version}" conf="compile;runtime" />
+		<dependency org="org.springframework" name="spring-aspects" rev="${spring.version}" conf="compile;runtime" />
+		<dependency org="org.springframework" name="spring-tx" rev="${spring.version}" conf="compile;runtime" />
+		<dependency org="org.springframework" name="spring-oxm" rev="${spring.version}" conf="compile;runtime" />
+
+		<dependency org="net.sf.ezmorph" name="ezmorph" rev="1.0.6" conf="compile;runtime" />
+		<dependency org="com.alibaba" name="fastjson" rev="1.2.9" conf="compile;runtime" />
+
+		<!-- Test libs -->
+		<dependency org="junit" name="junit" rev="4.12" conf="test->default" />
+		<dependency org="org.springframework" name="spring-test" rev="${spring.version}" conf="test->default" />
+
+	</dependencies>
+</ivy-module>

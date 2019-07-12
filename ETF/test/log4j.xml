@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+	<appender name="log-stdout" class="org.apache.log4j.ConsoleAppender">
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%-d{HH:mm:ss}%5p[%c{1}.%M:L%L]%m%n" />
+		</layout>
+	</appender>
+	<appender name="log-file" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="d:/applogs/etf.log" />
+		<param name="Append" value="true" />
+		<param name="MaxFileSize" value="10MB" />
+		<param name="encoding" value="UTF-8" />
+		<param name="MaxBackupIndex" value="100" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%-d%5p[%c{1}.%M:L%L]%m%n" />			                                       
+		</layout>
+	</appender>
+	
+	<category name="cn.panshi" additivity="false">
+		<priority value="DEBUG" />
+		<appender-ref ref="log-stdout" />
+		<appender-ref ref="log-file" />
+	</category>
+
+	<root>
+		<priority value="INFO" />
+		<appender-ref ref="log-stdout" />
+		<appender-ref ref="log-file" />
+	</root>
+</log4j:configuration>

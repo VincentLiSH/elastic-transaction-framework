@@ -1,0 +1,176 @@
+<project name="etf" default="help" xmlns:ivy="antlib:org.apache.ivy.ant">
+	<!--ivy properties used -->
+	<property name="publish.version" value="0.1" />
+	<property name="ivy.report.todir" value="build" />
+
+	<property name="build.debug" value="on" />
+	<property name="build.dir" value="${basedir}/build" />
+	<property name="classes.dir" value="${build.dir}/classes" />
+	<property name="web.dir" value="WebContent" />
+	<property name="test.dir" value="build/test" />
+
+	<ivy:settings file="ivysettings.xml" />
+
+	<target name="help">
+		<echo message="~~~~~~~~~~~~~~构建命令说明~~~~~~~~~~~~~~" />
+		<echo message="war-test" />
+	</target>
+
+	<target name="resolve" description="-- parse ivy.xml">
+		<ivy:resolve file="ivy.xml" conf="*" useCacheOnly="true" />
+		<ivy:cachepath pathid="ivy.libs.compile" type="jar,bundle" conf="compile,provided" />
+		<ivy:cachepath pathid="ivy.libs.test" type="jar,bundle" conf="test,provided" />
+		<ivy:cachepath pathid="ivy.libs.runtime" type="jar,bundle" conf="runtime" />
+	</target>
+
+	<target name="ivy-download" description="-- parse ivy.xml">
+		<ivy:resolve file="ivy.xml" conf="*" useCacheOnly="false" />
+		<ivy:cachepath pathid="ivy.libs.compile" type="jar,bundle" conf="compile,provided" />
+		<ivy:cachepath pathid="ivy.libs.test" type="jar,bundle" conf="test,provided" />
+		<ivy:cachepath pathid="ivy.libs.runtime" type="jar,bundle" conf="runtime" />
+	</target>
+
+	<target name="ivy-report" depends="resolve" description="-- resolve and retrieve dependencies with ivy">
+		<ivy:report />
+	</target>
+
+	<property environment="env" />
+	<path id="svnant.classpath">
+		<pathelement location="${env.ANT_HOME}/lib" />
+		<fileset dir="${env.ANT_HOME}/lib/">
+			<include name="svnant.jar" />
+		</fileset>
+	</path>
+
+	<target name="compile" depends="resolve">
+		<mkdir dir="${classes.dir}" />
+		<javac target="1.8" source="1.8" encoding="utf-8" srcdir="src" destdir="${classes.dir}" debug="${build.debug}" includeantruntime="false">
+			<compilerarg value="-Xlint:unchecked" />
+			<classpath>
+				<path refid="ivy.libs.compile" />
+				<path refid="ivy.libs.test" />
+				<!--path>
+					<fileset dir="${web.dir}/WEB-INF/lib" includes="*.jar" />
+				</path-->
+			</classpath>
+		</javac>
+		<copy todir="${classes.dir}">
+			<fileset dir="src">
+				<exclude name="**/*.java" />
+				<exclude name="**/*.properties" />
+			</fileset>
+		</copy>
+		<!-- copy the property files to class path -->
+		<native2ascii src="src" dest="${classes.dir}" includes="**/*.properties" encoding="UTF-8" />
+	</target>
+
+	<target name="jar" depends="compile" description="-- make a jar file for this project">
+		<mkdir dir="dist" />
+		<tstamp>
+			<format property="jar.time" pattern="yyyy-MM-dd hh:mm aa" locale="en" />
+		</tstamp>
+		<buildnumber />
+		<jar destfile="dist/${ant.project.name}.jar">
+			<manifest>
+				<attribute name="Build-Version" value="${publish.version}" />
+				<attribute name="Build-On" value="${jar.time}" />
+				<attribute name="Build-Number" value="${build.number}" />
+			</manifest>
+			<fileset dir="${classes.dir}" defaultexcludes="true">
+				<include name="**/*.class" />
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="gen-pom">
+		<ivy:makepom ivyfile="ivy.xml" pomfile="dist/${ant.project.name}.pom">
+			<mapping conf="default" scope="compile" />
+		</ivy:makepom>
+	</target>
+
+	<target name="publish-releases" depends="jar,gen-pom">
+		<property name="revision" value="${publish.version}" />
+		<ivy:publish artifactspattern="dist/[artifact].[ext]" resolver="releases" pubrevision="${publish.version}" status="release" update="true" overwrite="true" forcedeliver="true">
+		</ivy:publish>
+		<echo message="released with version ${publish.version}" />
+	</target>
+
+	<target name="publish-snapshots" depends="jar">
+		<property name="revision" value="${publish.version}" />
+		<ivy:publish artifactspattern="dist/[artifact].[ext]" resolver="snapshots" pubrevision="${publish.version}-SNAPSHOT" status="release" update="true" overwrite="true" forcedeliver="true" />
+		<echo message="released with version ${publish.version}" />
+	</target>
+
+	<target name="clean" description="--> clean the project">
+		<delete dir="${build.dir}" />
+	</target>
+
+	<target name="test" depends="compile" description="运行所有单元测试">
+		<mkdir dir="build/test" />
+		<javac encoding="utf-8" srcdir="test" destdir="build/test" debug="${build.debug}" includeantruntime="false">
+			<compilerarg value="-Xlint:unchecked" />
+			<classpath>
+				<pathelement path="${classes.dir}" />
+				<path refid="ivy.libs.test" />
+				<path refid="ivy.libs.compile" />
+			</classpath>
+		</javac>
+		<copy todir="build/test">
+			<fileset dir="test">
+				<include name="**/*.*" />
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+		<copy todir="${classes.dir}">
+			<fileset dir="test">
+				<include name="**/*.xml" />
+			</fileset>
+		</copy>
+		<available classname="junit.framework.TestCase" property="junit.present" />
+		<fail unless="junit.present" message="Please copy junit.jar into ${env.ANT_HOME}/lib" />
+		<mkdir dir="build/test/data" />
+		<junit printsummary="yes" forkmode="perBatch" fork="yes" errorProperty="test.failed" failureProperty="test.failed">
+			<classpath>
+				<path refid="ivy.libs.runtime" />
+				<path refid="ivy.libs.test" />
+				<path location="${classes.dir}" />
+				<path location="build/test" />
+			</classpath>
+			<formatter type="xml" />
+			<formatter type="brief" usefile="false" />
+			<batchtest fork="yes" todir="${test.dir}/data" if="testcase">
+				<fileset dir="build/test">
+					<include name="**/*${testcase}*" />
+					<exclude name="**/*TestCase.class" />
+				</fileset>
+			</batchtest>
+			<batchtest todir="build/test/data" unless="testcase">
+				<fileset dir="build/test">
+					<include name="**/*Test.class*" />
+					<exclude name="**/AbstractBaseTest.class" />
+				</fileset>
+			</batchtest>
+		</junit>
+		<test-report report.dir="build/test/reports" data.dir="${test.dir}/data" />
+		<fail if="test.failed">Unit tests failed. For error messages, check the log files in build/test/data.</fail>
+	</target>
+
+	<macrodef name="test-report">
+		<attribute name="data.dir" />
+		<attribute name="report.dir" />
+		<sequential>
+			<mkdir dir="@{report.dir}" />
+			<junitreport todir="@{report.dir}">
+				<fileset dir="@{data.dir}">
+					<include name="TEST-*.xml" />
+				</fileset>
+				<report format="frames" todir="@{report.dir}" />
+			</junitreport>
+		</sequential>
+	</macrodef>
+	<target name="test-reports" description="Generate test reports">
+		<mkdir dir="${test.dir}/reports" />
+		<test-report report.dir="${test.dir}/reports" data.dir="${test.dir}/data" />
+	</target>
+
+</project>
