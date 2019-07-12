@@ -55,7 +55,7 @@ public class EtfTemplateTest {
 
 			Assert.fail("应该抛EtfException4TransNeedRetry");
 		} catch (Exception e) {
-			Thread.sleep(10 * 1000);//等待etf框架自动重试
+			Thread.sleep(10 * 1000);//sleep 10秒钟 等待etf框架自动重试
 		}
 
 		EtfTransRecord tr = etfDaoRedis.loadEtfTransRecord(EtfDemoEnum.class.getName(),
