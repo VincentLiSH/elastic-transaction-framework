@@ -8,10 +8,10 @@ public interface EtfDao {
 
 	EtfTransRecord loadEtfTransRecord(String transTypeEnumClazz, String transType, String bizId);
 
-	EtfAbstractRedisLockTemplate getEtfConcurrentLock(String transTypeEnumClazz, String transTypeCode, String bizId, int expireSeconds);
+	EtfAbstractRedisLockTemplate getEtfConcurrentLock(String transTypeEnumClazz, String transTypeCode, String bizId,
+			int expireSeconds);
 
 	String saveTransRecord(EtfTransRecord tr);
-
 
 	void updateTransRecordNextRetry(EtfTransRecord tr, Date calcNextRetryTime);
 
@@ -19,11 +19,11 @@ public interface EtfDao {
 
 	void updateTransRecordMaxRetryTimes(EtfTransRecord tr);
 
-	void insertEtfRetryQueue(EtfTransRecord tr);
+	void insertEtfRetryQueueAndTimer(EtfTransRecord tr);
 
 	void addTrTransLog(EtfTransRecord tr, EtfTransExeLog etfLog);
 
-	void insertEtfQueryQueue(EtfTransRecord tr);
+	void insertEtfQueryQueueAndTimer(EtfTransRecord tr);
 
 	void updateTransRecordMaxQueryTimes(EtfTransRecord tr);
 
@@ -34,4 +34,8 @@ public interface EtfDao {
 	void addTransDuplicateInvokeLog(EtfTransRecord tr);
 
 	void updateTransRecordQueryFailure(EtfTransRecord tr);
+
+	void deleteEtfRetryQueueByTimerKey(String currEtfTransRetryTimerKey);
+
+	void deleteEtfQueryQueueByTimerKey(String currEtfTransQueryTimerKey);
 }

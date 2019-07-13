@@ -14,9 +14,9 @@ import cn.panshi.etf.core.EtfTemplateWithRedisDao;
 
 @Component
 public class EtfDemoComponent {
-	Logger		logger	= Logger.getLogger(EtfDemoComponent.class);
+	Logger logger = Logger.getLogger(EtfDemoComponent.class);
 	@Resource
-	EtfDaoRedis	etfDaoRedis;
+	EtfDaoRedis etfDaoRedis;
 
 	@EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "TX_simple")
 	public String doSometh_Simple(EtfDemoVo etfDemoVo) throws Exception {
@@ -64,9 +64,9 @@ public class EtfDemoComponent {
 			}
 
 			@Override
-			protected void doRetryByEtf() {
-				logger.debug("重试一次性成功");
-				// throw new RuntimeException("重试仍然失败");
+			protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {
+				logger.debug("第" + retryCount + "次重试" + retryTimerKey + "一次性成功");
+				// throw new RuntimeException("第" + retryCount + "次重试" + retryTimerKey + "重试仍然失败");
 			}
 
 			@Override
@@ -101,9 +101,9 @@ public class EtfDemoComponent {
 			}
 
 			@Override
-			protected boolean doTransQueryByEtf()
+			protected boolean doTransQueryByEtf(String queryTimerKey, Integer queryCount)
 					throws EtfException4TransQueryReturnFailureResult, EtfException4MaxQueryTimes {
-				logger.debug("轮询交易结果一次成功:" + etfDemoVo.getCode());
+				logger.debug("第" + queryCount + "次轮询交易结果" + queryTimerKey + "一次性成功");
 				return true;
 			}
 		};
