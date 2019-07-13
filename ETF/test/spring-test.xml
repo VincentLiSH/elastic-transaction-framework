@@ -7,7 +7,7 @@
 		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd">
 
 	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
-		p:location="classpath:redis.properties" />
+		p:location="classpath:redis-test.properties" />
 
 	<context:component-scan base-package="cn.panshi" use-default-filters="false">
 		<context:include-filter type="annotation" expression="org.springframework.stereotype.Service" />
@@ -29,7 +29,6 @@
 		<constructor-arg name="poolConfig" ref="poolConfig" />
 		<property name="hostName" value="${redis.host}" />
 		<property name="port" value="${redis.port}" />
-		<property name="password" value="${redis.password}" />
 		<property name="timeout" value="${redis.timeout}"></property>
 	</bean>
 

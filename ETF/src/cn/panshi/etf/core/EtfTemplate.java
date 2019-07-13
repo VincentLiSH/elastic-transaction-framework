@@ -37,17 +37,17 @@ import cn.panshi.etf.core.EtfTransExeLog.TRANS_EXE_MODE;
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type>, T_return> {
-	static Logger				logger		= LoggerFactory.getLogger(EtfTemplate.class);
+	static Logger logger = LoggerFactory.getLogger(EtfTemplate.class);
 
 	/**
 	 * 获取第二个泛型的class，用于处理幂等 直接返回结果   http://www.blogjava.net/calvin/archive/2009/12/10/43830.html
 	 */
-	Class<T_return>				returnClass	= (Class<T_return>) ((ParameterizedType) getClass().getGenericSuperclass())
+	Class<T_return> returnClass = (Class<T_return>) ((ParameterizedType) getClass().getGenericSuperclass())
 			.getActualTypeArguments()[1];
 
-	EtfDao						etfDao;
+	EtfDao etfDao;
 
-	private T_etf_trans_type	transType;
+	private T_etf_trans_type transType;
 
 	protected EtfTemplate(EtfDao etfDao) {
 		super();
@@ -126,7 +126,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 			logger.info(
 					"ETF交易【" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "】开始第" + tr.getQueryCount() + "次查询");
 
-			boolean querySuccess = doTransQueryByEtf();// 回调子类的交易查询逻辑
+			boolean querySuccess = doTransQueryByEtf(EtfAop.getCurrEtfTransQueryTimerKey(), tr.getQueryCount());// 回调子类的交易查询逻辑
 
 			if (querySuccess) {
 				logger.info("ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "第" + tr.getQueryCount()
@@ -153,7 +153,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 					etfDao.updateTransRecordNextQuery(tr, nextQueryTime);
 
 					tr.setNextQueryTime(nextQueryTime);
-					etfDao.insertEtfQueryQueue(tr);
+					etfDao.insertEtfQueryQueueAndTimer(tr);
 				}
 			} else {
 				etfDao.updateTransRecordQuerySuccess(tr);
@@ -175,6 +175,8 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 				}
 			}
 			etfDao.addTrTransLog(tr, etfLog);
+
+			etfDao.deleteEtfQueryQueueByTimerKey(EtfAop.getCurrEtfTransQueryTimerKey());
 		}
 	}
 
@@ -202,7 +204,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 		try {
 			logger.info(
 					"ETF交易【" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "】开始第" + tr.getRetryCount() + "次重试");
-			doRetryByEtf();
+			doRetryByEtf(EtfAop.getCurrEtfTransRetryTimerKey(), tr.getRetryCount());
 			logger.info(
 					"ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "第" + tr.getRetryCount() + "次重试成功！");
 
@@ -222,7 +224,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 				Date nextRetryTime = this.calcFutureTime(futureSeconds);
 				etfDao.updateTransRecordNextRetry(tr, nextRetryTime);
 				tr.setNextRetryTime(nextRetryTime);
-				etfDao.insertEtfRetryQueue(tr);
+				etfDao.insertEtfRetryQueueAndTimer(tr);
 			} else {
 				this.try2TransQuery(tr);
 				etfDao.updateTransRecordRetrySuccess(tr, result == null ? null : JSONObject.toJSONString(result));
@@ -238,6 +240,8 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 				etfLog.setError(error.length() > 1000 ? error.substring(0, 999) : error);
 			}
 			etfDao.addTrTransLog(tr, etfLog);
+
+			etfDao.deleteEtfRetryQueueByTimerKey(EtfAop.getCurrEtfTransRetryTimerKey());
 		}
 
 	}
@@ -283,7 +287,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 		} else if (ex instanceof EtfException4TransNeedRetry) {
 			tr.setNextRetryTime(this.calcFutureTime(EtfAop.getCurrEtfApiAnn().retryFirstDelaySeconds()));
 			tr.setRetryCount(0);
-			etfDao.insertEtfRetryQueue(tr);
+			etfDao.insertEtfRetryQueueAndTimer(tr);
 			logger.warn(
 					"ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "抛出EtfException4TransNeedRetry需要重试");
 		} else if (ex instanceof EtfException4TransDuplicate) {
@@ -318,11 +322,10 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 		if (apiAnn.queryMaxTimes() > 0) {
 			logger.info("ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "执行完成，但需要交易查询。。。");
 			int futureSeconds = (tr.getQueryCount() == null || tr.getQueryCount().intValue() == 1)
-					? apiAnn.queryFirstDelaySeconds()
-					: apiAnn.queryIntervalSeconds();
+					? apiAnn.queryFirstDelaySeconds() : apiAnn.queryIntervalSeconds();
 			tr.setNextQueryTime(this.calcFutureTime(futureSeconds));
 			tr.setQueryCount(0);
-			etfDao.insertEtfQueryQueue(tr);
+			etfDao.insertEtfQueryQueueAndTimer(tr);
 		}
 	}
 
@@ -376,9 +379,9 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 		if (EtfAop.getCurrEtfBizId() == null) {
 			return TRANS_EXE_MODE.normal;
 		} else {
-			if (EtfAop.getCurrEtfTransQueryCount() != null) {
+			if (EtfAop.getCurrEtfTransQueryTimerKey() != null) {
 				return TRANS_EXE_MODE.query;
-			} else if (EtfAop.getCurrEtfTransRetryCount() != null) {
+			} else if (EtfAop.getCurrEtfTransRetryTimerKey() != null) {
 				return TRANS_EXE_MODE.retry;
 			} else {
 				EtfAnnTransApi currEtfApiAnn = EtfAop.getCurrEtfApiAnn();
@@ -417,7 +420,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 	 * @throws EtfException4TransQueryReturnFailureResult 查询返回交易结果=failure 无需继续查询
 	 * @throws EtfException4MaxQueryTimes
 	 */
-	protected boolean doTransQueryByEtf()
+	protected boolean doTransQueryByEtf(String queryTimerKey, Integer queryCount)
 			throws EtfException4TransQueryReturnFailureResult, EtfException4MaxQueryTimes {
 		throw new UnsupportedOperationException("子类未实现交易查询逻辑！");
 	}
@@ -425,7 +428,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 	/**
 	 * CallBack:当ETF API配置@EtfAnnTransApi retryMaxTimes>0时，需要实现此回调
 	 */
-	protected void doRetryByEtf() {
+	protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {
 		throw new UnsupportedOperationException("子类未实现重试逻辑！");
 	}
 }

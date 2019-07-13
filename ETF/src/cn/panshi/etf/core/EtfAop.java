@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 
-
 /**
  * 拦截ETF交易组件API调用（@EtfAnnTransApi），保存入参、和API annotation到ThreadLocal 供EtfTemplate使用
  */
@@ -27,9 +26,9 @@ public class EtfAop {
 	 */
 	private final static ThreadLocal<JSONObject> CURR_INVOKE_INPUT_PARAM = new ThreadLocal<>();
 
-	private final static ThreadLocal<Integer> CURR_INVOKE_RETRY_COUNT = new ThreadLocal<>();
+	private final static ThreadLocal<String> CURR_INVOKE_RETRY_TIMER_KEY = new ThreadLocal<>();
 
-	private final static ThreadLocal<Integer> CURR_INVOKE_QUERY_COUNT = new ThreadLocal<>();
+	private final static ThreadLocal<String> CURR_INVOKE_QUERY_TIMER_KEY = new ThreadLocal<>();
 
 	@Around("@annotation(cn.panshi.etf.core.EtfAnnTransApi)")
 	public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -47,10 +46,10 @@ public class EtfAop {
 			CURR_INVOKE_INPUT_PARAM.remove();
 
 			CURR_INVOKE_BIZ_ID.remove();
-			
-			CURR_INVOKE_RETRY_COUNT.remove();
-			
-			CURR_INVOKE_QUERY_COUNT.remove();
+
+			CURR_INVOKE_RETRY_TIMER_KEY.remove();
+
+			CURR_INVOKE_QUERY_TIMER_KEY.remove();
 		}
 
 		return result;
@@ -90,19 +89,19 @@ public class EtfAop {
 		return CURR_INVOKE_BIZ_ID.get();
 	}
 
-	public static void setCurrEtfTransQueryCount(Integer queryCount) {
-		CURR_INVOKE_QUERY_COUNT.set(queryCount);
+	public static void setCurrEtfTransQueryTimerKey(String queryCount) {
+		CURR_INVOKE_QUERY_TIMER_KEY.set(queryCount);
 	}
 
-	public static Integer getCurrEtfTransQueryCount() {
-		return CURR_INVOKE_QUERY_COUNT.get();
+	public static String getCurrEtfTransQueryTimerKey() {
+		return CURR_INVOKE_QUERY_TIMER_KEY.get();
 	}
 
-	public static void setCurrEtfTransRetryCount(Integer queryCount) {
-		CURR_INVOKE_RETRY_COUNT.set(queryCount);
+	public static void setCurrEtfTransRetryTimerKey(String queryCount) {
+		CURR_INVOKE_RETRY_TIMER_KEY.set(queryCount);
 	}
 
-	public static Integer getCurrEtfTransRetryCount() {
-		return CURR_INVOKE_RETRY_COUNT.get();
+	public static String getCurrEtfTransRetryTimerKey() {
+		return CURR_INVOKE_RETRY_TIMER_KEY.get();
 	}
 }

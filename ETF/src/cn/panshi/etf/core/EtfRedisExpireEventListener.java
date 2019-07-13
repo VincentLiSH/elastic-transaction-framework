@@ -19,11 +19,11 @@ import cn.panshi.etf.core.EtfDaoRedis.ETF_REDIS_KEYS;
 
 @Configuration
 public class EtfRedisExpireEventListener {
-	static Logger		logger	= LoggerFactory.getLogger(EtfRedisExpireEventListener.class);
+	static Logger logger = LoggerFactory.getLogger(EtfRedisExpireEventListener.class);
 	@Resource
-	EtfTransBeanUtil	etfTransBeanUtil;
+	EtfTransBeanUtil etfTransBeanUtil;
 	@Resource
-	EtfDao				etfDao;
+	EtfDao etfDao;
 
 	@Bean
 	RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory) {
@@ -67,11 +67,11 @@ public class EtfRedisExpireEventListener {
 				JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
 				EtfAop.setCurrEtfBizId(bizId);
 
-				if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_FAILURE_RETRY2.name())) {
-					EtfAop.setCurrEtfTransRetryCount(tr.getRetryCount() == null ? 0 : tr.getRetryCount());
+				if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_FAILURE_RETRY_TIMER.name())) {
+					EtfAop.setCurrEtfTransRetryTimerKey(expireKey);
 					etfTransBeanUtil.invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
-				} else if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_TRANS_QUERY2.name())) {
-					EtfAop.setCurrEtfTransQueryCount(tr.getQueryCount() == null ? 0 : tr.getQueryCount());
+				} else if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_TRANS_QUERY_TIMER.name())) {
+					EtfAop.setCurrEtfTransQueryTimerKey(expireKey);
 					etfTransBeanUtil.invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
 				} else {
 

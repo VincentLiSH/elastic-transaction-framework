@@ -23,13 +23,13 @@ import junit.framework.Assert;
 @ContextConfiguration(locations = { "classpath:spring-test*.xml" })
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class EtfTemplateTest {
-	Logger				logger	= Logger.getLogger(EtfDemoComponent.class);
+	Logger logger = Logger.getLogger(EtfDemoComponent.class);
 	@Resource
-	EtfDemoComponent	etfDemoComponent;
+	EtfDemoComponent etfDemoComponent;
 	@Resource
-	EtfDaoRedis			etfDaoRedis;
+	EtfDaoRedis etfDaoRedis;
 	@Resource
-	RedisTemplate		redisTemplate;
+	RedisTemplate redisTemplate;
 
 	@Test
 	public void aFirstStep2ClearRedis() {
@@ -55,7 +55,13 @@ public class EtfTemplateTest {
 
 			Assert.fail("应该抛EtfException4TransNeedRetry");
 		} catch (Exception e) {
-			Thread.sleep(10 * 1000);//sleep 10秒钟 等待etf框架自动重试
+			Thread.sleep(2 * 1000);
+
+			Set<String> retryList = etfDaoRedis.listFailureRetryQueue();
+			logger.debug("重试未执行前 队列size应该为1:[" + retryList.size() + "]");
+			Assert.assertEquals(1, retryList.size());
+
+			Thread.sleep(8 * 1000);//sleep 10秒钟 等待etf框架自动重试
 		}
 
 		EtfTransRecord tr = etfDaoRedis.loadEtfTransRecord(EtfDemoEnum.class.getName(),
@@ -65,6 +71,10 @@ public class EtfTemplateTest {
 
 		logger.debug("10秒后交易重试应该成功，交易成功flag:[" + tr.getTransSuccess() + "]");
 		Assert.assertTrue(tr.getTransSuccess());
+
+		Set<String> retryList = etfDaoRedis.listFailureRetryQueue();
+		logger.debug("重试后 队列size应该为0:[" + retryList.size() + "]");
+		Assert.assertEquals(0, retryList.size());
 	}
 
 	@Test

@@ -2,6 +2,8 @@ package cn.panshi.etf.core;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -9,7 +11,10 @@ import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.stereotype.Component;
 
 import cn.panshi.etf.core.EtfTransExeLog.TRANS_EXE_MODE;
@@ -25,20 +30,34 @@ public class EtfDaoRedis implements EtfDao {
 		/**
 		 * 
 		 */
-		ETF_LOCK2,
+		ETF_LOCKER,
 		/**
-		 * key示例   ETF_TRANS_RECORD:com.xxx.EtfEnum@transA#bizId123
-		 * value示例  {"tr":{},"trLogJsonArry":[{},{}]
+		 * key示例 ETF_TRANS_RECORD:com.xxx.EtfEnum@transA#bizId123 value示例
+		 * {"tr":{},"trLogJsonArry":[{},{}]
 		 */
-		ETF_TRANS_RECORD2,
+		ETF_TRANS_RECORD,
 		/**
-		 * 
+		 * redis中此前缀的key充当了retry重试任务的定时器： 
+		 * --为其设置过期时间，设为希望重试任务执行的时间
+		 * --然后监听__keyevent@0__:expired，在redis过期清理事件中找到此前缀的key 然后为其执行重试操作
+		 * --因为过期时value以找不到，因此要求key中包含重试所需的全部信息：etfEnumClass、etfTransType、bizId
 		 */
-		ETF_FAILURE_RETRY2,
+		ETF_FAILURE_RETRY_TIMER,
 		/**
-		 * 
+		 * 前缀的key用于存储重试任务，不设过期时间，
+		 * 在设置重试timer时同时保存，在timer触发重试任务执行后删除；
+		 * 此类型key的作用是提高交易重试机制的可靠性： 
+		 * 当重试timer因故未触发重试（例如timer到期时没有监听器在运行）而导致重试停滞， 还有机会通过一个schedule轮询此队列来补救
 		 */
-		ETF_TRANS_QUERY2;
+		ETF_FAILURE_RETRY_QUEUE,
+		/**
+		 * 跟ETF_FAILURE_RETRY_TIMER类似，在redis中此前缀的key充当了transQuery任务的定时器
+		 */
+		ETF_TRANS_QUERY_TIMER,
+		/**
+		 * 跟ETF_FAILURE_RETRY_QUEUE类似，用于提高交易查询机制的可靠性
+		 */
+		ETF_TRANS_QUERY_QUEUE;
 	}
 
 	@Override
@@ -53,7 +72,7 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	String genEtfInvokeKey(String etfTransTypeEnumClass, String etfTransTypeEnumValue, String bizId) {
-		return ETF_REDIS_KEYS.ETF_LOCK2 + ":" + etfTransTypeEnumClass + "@" + etfTransTypeEnumValue + "#" + bizId;
+		return ETF_REDIS_KEYS.ETF_LOCKER + ":" + etfTransTypeEnumClass + "@" + etfTransTypeEnumValue + "#" + bizId;
 	}
 
 	@Override
@@ -88,7 +107,7 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	private String genEtfTrKey(String transTypeEnumClazz, String transType, String bizId) {
-		return ETF_REDIS_KEYS.ETF_TRANS_RECORD2 + ":" + transTypeEnumClazz + "@" + transType + "#" + bizId;
+		return ETF_REDIS_KEYS.ETF_TRANS_RECORD + ":" + transTypeEnumClazz + "@" + transType + "#" + bizId;
 	}
 
 	@Override
@@ -121,12 +140,27 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	@Override
-	public void insertEtfRetryQueue(EtfTransRecord tr) {
+	public void insertEtfRetryQueueAndTimer(EtfTransRecord tr) {
 		String retryTime = new SimpleDateFormat("yyyyMMdd_HHmm").format(tr.getNextRetryTime());
-		String key = ETF_REDIS_KEYS.ETF_FAILURE_RETRY2 + ":" + retryTime + ":" + tr.getTransTypeEnumClazz() + "@"
-				+ tr.getTransType() + "#" + tr.getBizId();
-		redisTemplate.opsForValue().set(key, "");
-		redisTemplate.expireAt(key, tr.getNextRetryTime());
+		String key4Timer = ETF_REDIS_KEYS.ETF_FAILURE_RETRY_TIMER + ":" + retryTime + ":" + tr.getTransTypeEnumClazz()
+				+ "@" + tr.getTransType() + "#" + tr.getBizId();
+		String key4Queue = ETF_REDIS_KEYS.ETF_FAILURE_RETRY_QUEUE + ":" + retryTime + ":" + tr.getTransTypeEnumClazz()
+				+ "@" + tr.getTransType() + "#" + tr.getBizId();
+		List<Object> txResults = (List<Object>) redisTemplate.execute(new SessionCallback<List<Object>>() {
+			@Override
+			public List<Object> execute(RedisOperations operations) throws DataAccessException {
+				operations.multi();
+
+				operations.opsForValue().set(key4Timer, "");
+				operations.expireAt(key4Timer, tr.getNextRetryTime());
+
+				operations.opsForValue().set(key4Queue, "");
+
+				return operations.exec();
+			}
+		});
+
+		logger.debug("事务执行结果：" + txResults.size());
 	}
 
 	@Override
@@ -137,9 +171,9 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	@Override
-	public void insertEtfQueryQueue(EtfTransRecord tr) {
+	public void insertEtfQueryQueueAndTimer(EtfTransRecord tr) {
 		String queryTime = new SimpleDateFormat("yyyyMMdd_HHmm").format(tr.getNextQueryTime());
-		String key = ETF_REDIS_KEYS.ETF_TRANS_QUERY2 + ":" + queryTime + ":" + tr.getTransTypeEnumClazz() + "@"
+		String key = ETF_REDIS_KEYS.ETF_TRANS_QUERY_TIMER + ":" + queryTime + ":" + tr.getTransTypeEnumClazz() + "@"
 				+ tr.getTransType() + "#" + tr.getBizId();
 		redisTemplate.opsForValue().set(key, "");
 		redisTemplate.expireAt(key, tr.getNextQueryTime());
@@ -171,7 +205,7 @@ public class EtfDaoRedis implements EtfDao {
 		po.setNextQueryTime(null);
 		saveTransRecord(po);
 	}
-	
+
 	@Override
 	public void updateTransRecordQueryFailure(EtfTransRecord tr) {
 		EtfTransRecord po = loadEtfTransRecord(tr);
@@ -184,7 +218,7 @@ public class EtfDaoRedis implements EtfDao {
 	@Override
 	public void addTransDuplicateInvokeLog(EtfTransRecord tr) {
 		EtfTransRecord po = loadEtfTransRecord(tr);
-		EtfTransExeLog etfLog=new EtfTransExeLog();
+		EtfTransExeLog etfLog = new EtfTransExeLog();
 		etfLog.setCrtDate(new Date());
 		etfLog.setLogType(TRANS_EXE_MODE.duplicate);
 		etfLog.setError(EtfException4TransDuplicate.class.getName());
@@ -195,5 +229,25 @@ public class EtfDaoRedis implements EtfDao {
 	private EtfTransRecord loadEtfTransRecord(EtfTransRecord tr) {
 		EtfTransRecord po = loadEtfTransRecord(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
 		return po;
+	}
+
+	public Set<String> listFailureRetryQueue() {
+		return redisTemplate.keys(ETF_REDIS_KEYS.ETF_FAILURE_RETRY_QUEUE.name() + "*");
+	}
+
+	@Override
+	public void deleteEtfRetryQueueByTimerKey(String currEtfTransRetryTimerKey) {
+		String keySurfix = currEtfTransRetryTimerKey.substring(ETF_REDIS_KEYS.ETF_FAILURE_RETRY_TIMER.name().length());
+
+		String retryQueueKey = ETF_REDIS_KEYS.ETF_FAILURE_RETRY_QUEUE + keySurfix;
+		redisTemplate.delete(retryQueueKey);
+	}
+
+	@Override
+	public void deleteEtfQueryQueueByTimerKey(String currEtfTransQueryTimerKey) {
+		String keySurfix = currEtfTransQueryTimerKey.substring(ETF_REDIS_KEYS.ETF_TRANS_QUERY_TIMER.name().length());
+
+		String queryQueueKey = ETF_REDIS_KEYS.ETF_TRANS_QUERY_QUEUE + keySurfix;
+		redisTemplate.delete(queryQueueKey);
 	}
 }

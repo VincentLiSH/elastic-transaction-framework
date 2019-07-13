@@ -4,7 +4,7 @@
 		<credentials host="115.159.113.31" realm="Sonatype Nexus Repository Manager" username="admin" passwd="admin123" />
 	</ivy:configure>
 	<settings defaultResolver="defaultChain" defaultConflictManager="latest-revision" />
-	<caches defaultCacheDir="d:/.ivy2" />
+	<caches defaultCacheDir="e:/.ivy2" />
 	<property name="spring.version" value="4.3.19.RELEASE"/>
 	
 	<property name="nexus-public" value="http://115.159.113.31:8078/nexus/content/groups/public" />
