@@ -6,7 +6,7 @@ import java.util.Date;
 @SuppressWarnings("serial")
 public class EtfTransExeLog implements Serializable {
 	public enum TRANS_EXE_MODE {
-		normal, retry, query, doNext, duplicate;
+		normal, retry, after_success, duplicate;
 	}
 
 	TRANS_EXE_MODE logType;
