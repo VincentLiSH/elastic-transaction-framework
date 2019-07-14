@@ -99,7 +99,6 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 			if (lockSuccess) {
 				Long unlock = etfLock.unlock();
 				logger.debug("ETF交易" + getCurrEtfTransExeKey(transType, bizId) + "执行" + exeMode + "后 释放锁：" + unlock);
-				System.out.println("ETF交易结束！");
 			}
 		}
 	}

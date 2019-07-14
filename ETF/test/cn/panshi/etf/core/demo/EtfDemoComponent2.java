@@ -17,7 +17,7 @@ public class EtfDemoComponent2 {
 	EtfDaoRedis etfDaoRedis;
 
 	@EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "TX_simple_Nested", //
-			retryMaxTimes = 5, retryFirstDelaySeconds = 6, retryIntervalSeconds = 10)
+			retryMaxTimes = 3, retryFirstDelaySeconds = 5, retryIntervalSeconds = 10)
 	public String doSometh_Simple_By_Another_Etf(EtfDemoVo2 etfDemoVo) throws Exception {
 
 		EtfTemplateWithRedisDao<EtfDemoEnum, String> etfTemplate = new EtfTemplateWithRedisDao<EtfDemoEnum, String>(

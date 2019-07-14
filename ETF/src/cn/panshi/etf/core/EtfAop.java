@@ -70,6 +70,8 @@ public class EtfAop {
 						CURR_INVOKE_RETRY_TIMER_KEY.remove();
 
 						CURR_INVOKE_QUERY_TIMER_KEY.remove();
+
+						EXIST_ETF_INVOKING_CONTEXT.remove();
 					}
 
 				}
@@ -96,6 +98,8 @@ public class EtfAop {
 			CURR_INVOKE_RETRY_TIMER_KEY.remove();
 
 			CURR_INVOKE_QUERY_TIMER_KEY.remove();
+
+			EXIST_ETF_INVOKING_CONTEXT.remove();
 		}
 
 		return result;

@@ -44,15 +44,16 @@ public class EtfTemplateTest {
 		EtfDemoVo vo = new EtfDemoVo();
 		vo.setCode("bizId_Simple");
 		etfDemoComponent.doSometh_Simple(vo);
+
 	}
 
 	@Test
 	public void testDoSometh_NeedRetry() throws Exception {
 		EtfDemoVo vo = new EtfDemoVo();
-		vo.setCode("bizId");
+		vo.setCode("bizId-testDoSometh_NeedRetry");
 		try {
-			etfDemoComponent.doSometh_Critical_NeedFailureRetry(vo);
-
+			String result = etfDemoComponent.doSometh_Critical_NeedFailureRetry(vo);
+			logger.error("应该抛EtfException4TransNeedRetry:" + result);
 			Assert.fail("应该抛EtfException4TransNeedRetry");
 		} catch (Exception e) {
 			Thread.sleep(2 * 1000);
@@ -67,7 +68,7 @@ public class EtfTemplateTest {
 		EtfTransRecord tr = etfDaoRedis.loadEtfTransRecord(EtfDemoEnum.class.getName(),
 				EtfDemoEnum.TX_need_retry.name(), vo.getCode());
 		logger.debug("10秒后交易重试应该成功，交易结果:[" + tr.getTransResultJson() + "]");
-		Assert.assertEquals("\"return bizId\"", tr.getTransResultJson());
+		Assert.assertEquals("\"return bizId-testDoSometh_NeedRetry\"", tr.getTransResultJson());
 
 		logger.debug("10秒后交易重试应该成功，交易成功flag:[" + tr.getTransSuccess() + "]");
 		Assert.assertTrue(tr.getTransSuccess());
@@ -118,13 +119,21 @@ public class EtfTemplateTest {
 		vo.setCode("bizId");
 		etfDemoComponent.doSometh_AndThen_Invoke_Another_ETF(vo);
 
-		Thread.sleep(60 * 1000);//sleep 10秒钟 等待etf框架自动回调next
+		Thread.sleep(10 * 1000);//sleep 10秒钟 等待etf框架自动回调next
 
-		EtfTransRecord tr = etfDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
+		EtfTransRecord tr1 = etfDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
 
-		logger.debug("交易结果:[" + tr.getTransResultJson() + "]");
-		Assert.assertEquals("\"return bizId\"", tr.getTransResultJson());
+		logger.debug("父交易getTransSuccess应该为true:[" + tr1.getTransSuccess() + "]");
+		Assert.assertTrue(tr1.getTransSuccess());
 
-		Thread.sleep(1000 * 1000);
+		Thread.sleep(20 * 1000);
+
+		EtfTransRecord trNested = etfDaoRedis.loadEtfTransRecord(transEnumClass, EtfDemoEnum.TX_simple_Nested.name(),
+				vo.getCode());
+
+		logger.debug("子交易getTransSuccess应该为true:[" + trNested.getTransSuccess() + "]");
+		Assert.assertTrue(trNested.getTransSuccess());
+		logger.debug("子交易getRetryCount应该为2:[" + trNested.getRetryCount() + "]");
+		Assert.assertEquals(2, trNested.getRetryCount().intValue());
 	}
 }
