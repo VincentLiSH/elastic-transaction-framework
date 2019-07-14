@@ -113,7 +113,8 @@ public class EtfDemoComponent {
 	}
 
 	@EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "AndThen_Invoke_Another_ETF", //
-			queryMaxTimes = 5, queryFirstDelaySeconds = 8, queryIntervalSeconds = 60)
+			queryMaxTimes = 5, queryFirstDelaySeconds = 8, queryIntervalSeconds = 60, //
+			retryMaxTimes = 3, retryFirstDelaySeconds = 3, retryIntervalSeconds = 5)
 	public String doSometh_AndThen_Invoke_Another_ETF(EtfDemoVo etfDemoVo) throws Exception {
 
 		EtfTemplateWithRedisDao<EtfDemoEnum, String> etfTemplate = new EtfTemplateWithRedisDao<EtfDemoEnum, String>(
@@ -126,7 +127,13 @@ public class EtfDemoComponent {
 
 			@Override
 			protected void doBizWithinEtf() throws EtfException4TransNeedRetry {
-				logger.debug("交易完成，需要轮询交易结果:" + etfDemoVo.getCode());
+				throw new EtfException4TransNeedRetry("失败 需要重试一次");
+			}
+
+			@Override
+			protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {
+				logger.debug("一次重试完成，需要轮询交易结果:" + etfDemoVo.getCode());
+				;
 			}
 
 			@Override

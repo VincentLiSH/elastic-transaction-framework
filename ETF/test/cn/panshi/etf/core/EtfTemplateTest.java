@@ -117,7 +117,11 @@ public class EtfTemplateTest {
 
 		EtfDemoVo vo = new EtfDemoVo();
 		vo.setCode("bizId");
-		etfDemoComponent.doSometh_AndThen_Invoke_Another_ETF(vo);
+		try {
+			etfDemoComponent.doSometh_AndThen_Invoke_Another_ETF(vo);
+		} catch (Exception e) {
+			logger.debug(e.getMessage());
+		}
 
 		Thread.sleep(10 * 1000);//sleep 10秒钟 等待etf框架自动回调next
 
