@@ -109,4 +109,22 @@ public class EtfTemplateTest {
 		Assert.assertEquals(2, tr.getLogList().size());
 	}
 
+	@Test
+	public void testNestedEtfInvoke() throws Exception {
+		String transEnumValue = EtfDemoEnum.AndThen_Invoke_Another_ETF.name();
+		String transEnumClass = EtfDemoEnum.class.getName();
+
+		EtfDemoVo vo = new EtfDemoVo();
+		vo.setCode("bizId");
+		etfDemoComponent.doSometh_AndThen_Invoke_Another_ETF(vo);
+
+		Thread.sleep(60 * 1000);//sleep 10秒钟 等待etf框架自动回调next
+
+		EtfTransRecord tr = etfDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
+
+		logger.debug("交易结果:[" + tr.getTransResultJson() + "]");
+		Assert.assertEquals("\"return bizId\"", tr.getTransResultJson());
+
+		Thread.sleep(1000 * 1000);
+	}
 }

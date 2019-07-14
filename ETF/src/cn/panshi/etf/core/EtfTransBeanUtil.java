@@ -30,6 +30,7 @@ public class EtfTransBeanUtil implements BeanPostProcessor {
 
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+		Map<String, Object> etfBeanMethodMap = new HashMap<>();
 		Method[] methods = ReflectionUtils.getAllDeclaredMethods(bean.getClass());
 		if (methods != null) {
 			for (Method method : methods) {
@@ -37,7 +38,19 @@ public class EtfTransBeanUtil implements BeanPostProcessor {
 				if (ann == null) {
 					continue;
 				}
+				boolean firstTimeCheckTheMethod = true;
+				if (etfBeanMethodMap.get(method.getName()) != null) {
+					firstTimeCheckTheMethod = false;
+				} else {
+					etfBeanMethodMap.put(method.getName(), "");
+				}
+
 				String key = ann.transEnumClazz().getName() + "." + ann.transEnumValue();
+				if (etfTransBeanMap.get(key) != null && firstTimeCheckTheMethod) {
+					throw new RuntimeException("ETF api[" + key + "]被重复定义了:[" + beanName + "." + method.getName()
+							+ "]和[" + etfTransBeanMap.get(key).getClass().getName() + "."
+							+ etpTransBeanMethodMap.get(key).getName() + "]");
+				}
 				etfTransBeanMap.put(key, bean);
 				etpTransBeanMethodMap.put(key, method);
 			}
@@ -63,6 +76,7 @@ public class EtfTransBeanUtil implements BeanPostProcessor {
 			argArry2InvokeTarget[i] = JSONObject.toJavaObject(paramJsonObj.getJSONObject(paraNames[i]),
 					methodParam.getType());
 		}
-		ReflectionUtils.invokeMethod(method, target, argArry2InvokeTarget);
+		Object object = ReflectionUtils.invokeMethod(method, target, argArry2InvokeTarget);
+		log.debug(object + "");
 	}
 }

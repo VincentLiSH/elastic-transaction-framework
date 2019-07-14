@@ -17,6 +17,8 @@ public class EtfDemoComponent {
 	Logger logger = Logger.getLogger(EtfDemoComponent.class);
 	@Resource
 	EtfDaoRedis etfDaoRedis;
+	@Resource
+	EtfDemoComponent2 etfDemoComponent2;
 
 	@EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "TX_simple")
 	public String doSometh_Simple(EtfDemoVo etfDemoVo) throws Exception {
@@ -101,9 +103,48 @@ public class EtfDemoComponent {
 			}
 
 			@Override
-			protected boolean doTransQueryByEtf(String queryTimerKey, Integer queryCount)
+			protected boolean doTransQueryOrNextTransByEtf(String queryTimerKey, Integer queryCount)
 					throws EtfException4TransQueryReturnFailureResult, EtfException4MaxQueryTimes {
 				logger.debug("第" + queryCount + "次轮询交易结果" + queryTimerKey + "一次性成功");
+				return true;
+			}
+		};
+		return etfTemplate.executeEtfTransaction();
+	}
+
+	@EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "AndThen_Invoke_Another_ETF", //
+			queryMaxTimes = 5, queryFirstDelaySeconds = 8, queryIntervalSeconds = 60)
+	public String doSometh_AndThen_Invoke_Another_ETF(EtfDemoVo etfDemoVo) throws Exception {
+
+		EtfTemplateWithRedisDao<EtfDemoEnum, String> etfTemplate = new EtfTemplateWithRedisDao<EtfDemoEnum, String>(
+				etfDaoRedis) {
+
+			@Override
+			protected String calcEtfBizId() {
+				return etfDemoVo.getCode();
+			}
+
+			@Override
+			protected void doBizWithinEtf() throws EtfException4TransNeedRetry {
+				logger.debug("交易完成，需要轮询交易结果:" + etfDemoVo.getCode());
+			}
+
+			@Override
+			protected String constructResult() {
+				return "return " + etfDemoVo.getCode();
+			}
+
+			@Override
+			protected boolean doTransQueryOrNextTransByEtf(String queryTimerKey, Integer queryCount)
+					throws EtfException4TransQueryReturnFailureResult, EtfException4MaxQueryTimes {
+				logger.debug("第" + queryCount + "次轮询交易结果" + queryTimerKey + "一次性成功");
+				try {
+					EtfDemoVo2 etfDemoVo2 = new EtfDemoVo2();
+					etfDemoVo2.setCode(etfDemoVo.getCode());
+					etfDemoComponent2.doSometh_Simple_By_Another_Etf(etfDemoVo2);
+				} catch (Exception e) {
+					logger.error(e.getMessage());
+				}
 				return true;
 			}
 		};

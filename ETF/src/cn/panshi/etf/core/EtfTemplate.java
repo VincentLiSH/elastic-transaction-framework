@@ -6,8 +6,7 @@ import java.lang.reflect.ParameterizedType;
 import java.util.Calendar;
 import java.util.Date;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import com.alibaba.fastjson.JSONObject;
 
@@ -37,7 +36,7 @@ import cn.panshi.etf.core.EtfTransExeLog.TRANS_EXE_MODE;
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type>, T_return> {
-	static Logger logger = LoggerFactory.getLogger(EtfTemplate.class);
+	static Logger logger = Logger.getLogger(EtfTemplate.class);
 
 	/**
 	 * 获取第二个泛型的class，用于处理幂等 直接返回结果   http://www.blogjava.net/calvin/archive/2009/12/10/43830.html
@@ -126,7 +125,8 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 			logger.info(
 					"ETF交易【" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "】开始第" + tr.getQueryCount() + "次查询");
 
-			boolean querySuccess = doTransQueryByEtf(EtfAop.getCurrEtfTransQueryTimerKey(), tr.getQueryCount());// 回调子类的交易查询逻辑
+			boolean querySuccess = doTransQueryOrNextTransByEtf(EtfAop.getCurrEtfTransQueryTimerKey(),
+					tr.getQueryCount());// 回调子类的交易查询逻辑
 
 			if (querySuccess) {
 				logger.info("ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "第" + tr.getQueryCount()
@@ -420,7 +420,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 	 * @throws EtfException4TransQueryReturnFailureResult 查询返回交易结果=failure 无需继续查询
 	 * @throws EtfException4MaxQueryTimes
 	 */
-	protected boolean doTransQueryByEtf(String queryTimerKey, Integer queryCount)
+	protected boolean doTransQueryOrNextTransByEtf(String queryTimerKey, Integer queryCount)
 			throws EtfException4TransQueryReturnFailureResult, EtfException4MaxQueryTimes {
 		throw new UnsupportedOperationException("子类未实现交易查询逻辑！");
 	}

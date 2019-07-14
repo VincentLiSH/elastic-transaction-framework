@@ -3,8 +3,7 @@ package cn.panshi.etf.core;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.Message;
@@ -19,7 +18,7 @@ import cn.panshi.etf.core.EtfDaoRedis.ETF_REDIS_KEYS;
 
 @Configuration
 public class EtfRedisExpireEventListener {
-	static Logger logger = LoggerFactory.getLogger(EtfRedisExpireEventListener.class);
+	static Logger logger = Logger.getLogger(EtfRedisExpireEventListener.class);
 	@Resource
 	EtfTransBeanUtil etfTransBeanUtil;
 	@Resource
