@@ -19,6 +19,7 @@ import cn.panshi.etf.core.EtfDaoRedis.ETF_REDIS_KEYS;
 @Configuration
 public class EtfRedisExpireEventListener {
 	static Logger logger = Logger.getLogger(EtfRedisExpireEventListener.class);
+
 	@Resource
 	EtfTransBeanUtil etfTransBeanUtil;
 	@Resource

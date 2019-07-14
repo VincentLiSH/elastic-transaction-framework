@@ -420,6 +420,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 	 * @throws EtfException4MaxQueryTimes
 	 */
 	protected boolean doTransQueryOrNextTransByEtf(String queryTimerKey, Integer queryCount)
+
 			throws EtfException4TransQueryReturnFailureResult, EtfException4MaxQueryTimes {
 		throw new UnsupportedOperationException("子类未实现交易查询逻辑！");
 	}

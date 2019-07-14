@@ -17,6 +17,7 @@ public class EtfDemoComponent {
 	Logger logger = Logger.getLogger(EtfDemoComponent.class);
 	@Resource
 	EtfDaoRedis etfDaoRedis;
+
 	@Resource
 	EtfDemoComponent2 etfDemoComponent2;
 
@@ -145,6 +146,10 @@ public class EtfDemoComponent {
 				} catch (Exception e) {
 					logger.error(e.getMessage());
 				}
+
+			protected boolean doTransQueryByEtf(String queryTimerKey, Integer queryCount)
+					throws EtfException4TransQueryReturnFailureResult, EtfException4MaxQueryTimes {
+				logger.debug("第" + queryCount + "次轮询交易结果" + queryTimerKey + "一次性成功");
 				return true;
 			}
 		};
