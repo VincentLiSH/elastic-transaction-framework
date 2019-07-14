@@ -87,7 +87,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 
 				if (exeMode == TRANS_EXE_MODE.retry) {
 					return this.exeRetryMode(tr);
-				} else if (exeMode == TRANS_EXE_MODE.query) {
+				} else if (exeMode == TRANS_EXE_MODE.after_success) {
 					this.exeQueryMode(tr);
 					return null;
 				} else {
@@ -160,7 +160,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 
 			EtfTransExeLog etfLog = new EtfTransExeLog();
 			etfLog.setCrtDate(new Date());
-			etfLog.setLogType(TRANS_EXE_MODE.query);
+			etfLog.setLogType(TRANS_EXE_MODE.after_success);
 			if (ex != null) {//
 				if (ex instanceof EtfException4TransQueryNoResult) {
 					etfLog.setError(EtfException4TransQueryNoResult.class.getName());
@@ -379,7 +379,7 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 			return TRANS_EXE_MODE.normal;
 		} else {
 			if (EtfAop.getCurrEtfTransQueryTimerKey() != null) {
-				return TRANS_EXE_MODE.query;
+				return TRANS_EXE_MODE.after_success;
 			} else if (EtfAop.getCurrEtfTransRetryTimerKey() != null) {
 				return TRANS_EXE_MODE.retry;
 			} else {
