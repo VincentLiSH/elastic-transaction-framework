@@ -1,6 +1,9 @@
 package cn.panshi.etf.tcc;
 
+<<<<<<< HEAD
 @SuppressWarnings("serial")
+=======
+>>>>>>> branch 'dev' of https://github.com/VincentLiSH/elastic-transaction-framework.git
 public class EtfTccException4PrepareStage extends Exception {
 	String error;
 
