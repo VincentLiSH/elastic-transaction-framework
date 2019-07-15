@@ -1,6 +1,8 @@
 # elastic-transaction-framework 弹性事务框架概述
 
-## 首先上一段代码，可以最好的展示此框架如何以无侵入方式 对现有业务代码做ETF增强：
+## 首先上一段代码，展示此框架如何以无侵入方式对现有业务代码做ETF增强：
+* 对业务组件API的方法签名完全不做限制，只需添加@EtfAnnTransApi 配置重试和查询回调规则
+* 只需把业务逻辑按照EtfTemplateWithRedisDao的规范分解和填充到各个回调中，即可获得交易重试和交易查询回调。
 
 ``` java
 @EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "AndThen_Invoke_Another_ETF", //
