@@ -30,6 +30,8 @@
 		<property name="hostName" value="${redis.host}" />
 		<property name="port" value="${redis.port}" />
 		<property name="timeout" value="${redis.timeout}"></property>
+		<!-- uncomment if redis enable auth -->
+		<!-- <property name="password" value="${redis.password}" />  -->
 	</bean>
 
 	<bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
