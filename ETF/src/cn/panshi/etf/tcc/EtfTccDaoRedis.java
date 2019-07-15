@@ -178,7 +178,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	private void triggerTccConfirm(String tccTransBizId, String transTypeEnumClazz) {
 		String confirmTimerKey = this.calcTccConfirmTimerKey(transTypeEnumClazz, tccTransBizId);
-		redisTemplate.opsForValue().set(confirmTimerKey, "", 10, TimeUnit.SECONDS);
+		redisTemplate.opsForValue().set(confirmTimerKey, "", 1, TimeUnit.SECONDS);
 
 		logger.debug("设置timer[" + confirmTimerKey + "]过期");
 	}
@@ -189,7 +189,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	private void triggerTccCancel(String tccTransBizId, String transTypeEnumClazz) {
 		String cancelTimerKey = this.calcTccCancelTimerKey(transTypeEnumClazz, tccTransBizId);
-		redisTemplate.opsForValue().set(cancelTimerKey, "", 10, TimeUnit.SECONDS);
+		redisTemplate.opsForValue().set(cancelTimerKey, "", 1, TimeUnit.SECONDS);
 
 		logger.debug("设置timer[" + cancelTimerKey + "]过期");
 	}

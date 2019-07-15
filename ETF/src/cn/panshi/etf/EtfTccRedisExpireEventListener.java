@@ -1,4 +1,4 @@
-package cn.panshi.etf.core;
+package cn.panshi.etf;
 
 import javax.annotation.Resource;
 
@@ -12,17 +12,21 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
-import com.alibaba.fastjson.JSONObject;
-
 import cn.panshi.etf.core.EtfDaoRedis.ETF_REDIS_KEYS;
+import cn.panshi.etf.core.EtfTransBeanUtil;
+import cn.panshi.etf.tcc.EtfTccBeanUtil;
+import cn.panshi.etf.tcc.EtfTccDao;
+import cn.panshi.etf.tcc.EtfTccDaoRedis.ETF_TCC_KEYS;
 
 @Configuration
-public class EtfRedisExpireEventListener {
-	static Logger logger = Logger.getLogger(EtfRedisExpireEventListener.class);
+public class EtfTccRedisExpireEventListener {
+	static Logger logger = Logger.getLogger(EtfTccRedisExpireEventListener.class);
+	@Resource
+	EtfTccBeanUtil etfTccBeanUtil;
 	@Resource
 	EtfTransBeanUtil etfTransBeanUtil;
 	@Resource
-	EtfDao etfDao;
+	EtfTccDao etfTccDao;
 
 	@Bean
 	RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory) {
@@ -49,36 +53,30 @@ public class EtfRedisExpireEventListener {
 						matchingKey = true;
 					}
 				}
-
-				if (!matchingKey) {
+				if (matchingKey) {
+					logger.debug(String.format("redis queue: %s, body: %s", new String(channel), expireKey));
+					etfTransBeanUtil.processEtfTimerExpire(expireKey);
 					return;
 				}
 
-				logger.debug(String.format("redis queue: %s, body: %s", new String(channel), expireKey));
-
-				String bizId = expireKey.substring(expireKey.indexOf("#") + 1);
-
-				String transTypeEnumClazz = expireKey.substring(expireKey.lastIndexOf(":") + 1, expireKey.indexOf("@"));
-
-				String transType = expireKey.substring(expireKey.indexOf("@") + 1, expireKey.indexOf("#"));
-
-				EtfTransRecord tr = etfDao.loadEtfTransRecord(transTypeEnumClazz, transType, bizId);
-				JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
-				EtfAop.setCurrEtfBizId(bizId);
-
-				if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_FAILURE_RETRY_TIMER.name())) {
-					EtfAop.setCurrEtfTransRetryTimerKey(expireKey);
-					etfTransBeanUtil.invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
-				} else if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_TRANS_QUERY_TIMER.name())) {
-					EtfAop.setCurrEtfTransQueryTimerKey(expireKey);
-					etfTransBeanUtil.invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
-				} else {
-
+				boolean matchingTccTimerKey = false;
+				for (ETF_TCC_KEYS key : ETF_TCC_KEYS.values()) {
+					if (StringUtils.startsWith(expireKey, key.name())) {
+						matchingTccTimerKey = true;
+					}
 				}
+
+				if (matchingTccTimerKey) {
+					logger.debug(String.format("redis queue: %s, body: %s", new String(channel), expireKey));
+					etfTccBeanUtil.processTccTimerExpire(expireKey);
+				} else {
+					return;
+				}
+
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
-
 		}
+
 	}
 }
