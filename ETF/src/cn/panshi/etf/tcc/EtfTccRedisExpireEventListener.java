@@ -1,7 +1,5 @@
 package cn.panshi.etf.tcc;
 
-import java.util.List;
-
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
@@ -13,10 +11,9 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import com.alibaba.fastjson.JSONObject;
-
+import cn.panshi.etf.core.EtfDaoRedis.ETF_REDIS_KEYS;
+import cn.panshi.etf.core.EtfTransBeanUtil;
 import cn.panshi.etf.tcc.EtfTccDaoRedis.ETF_TCC_KEYS;
 
 @Configuration
@@ -25,9 +22,9 @@ public class EtfTccRedisExpireEventListener {
 	@Resource
 	EtfTccBeanUtil etfTccBeanUtil;
 	@Resource
-	EtfTccDao etfTccDao;
+	EtfTransBeanUtil etfTransBeanUtil;
 	@Resource
-	ThreadPoolTaskExecutor executor;
+	EtfTccDao etfTccDao;
 
 	@Bean
 	RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory) {
@@ -49,77 +46,35 @@ public class EtfTccRedisExpireEventListener {
 				String expireKey = new String(body);
 
 				boolean matchingKey = false;
-				for (ETF_TCC_KEYS key : ETF_TCC_KEYS.values()) {
+				for (ETF_REDIS_KEYS key : ETF_REDIS_KEYS.values()) {
 					if (StringUtils.startsWith(expireKey, key.name())) {
 						matchingKey = true;
 					}
 				}
-
-				if (!matchingKey) {
+				if (matchingKey) {
+					logger.debug(String.format("redis queue: %s, body: %s", new String(channel), expireKey));
+					etfTransBeanUtil.processEtfTimerExpire(expireKey);
 					return;
 				}
 
-				logger.debug(String.format("redis queue: %s, body: %s", new String(channel), expireKey));
-
-				if (StringUtils.startsWith(expireKey, ETF_TCC_KEYS.ETF_TCC_TIMER_CANCEL.name())) {
-					String bizId = expireKey.substring(expireKey.indexOf("#") + 1);
-
-					String transTypeEnumClazz = expireKey.substring(expireKey.lastIndexOf(":") + 1,
-							expireKey.indexOf("#"));
-
-					List<EtfTccRecordStep> trStepList = etfTccDao.queryTccRecordStepList(transTypeEnumClazz, bizId);
-					logger.debug(
-							"查找到需要cancel的TCC[" + transTypeEnumClazz + "#" + bizId + "] step" + trStepList.size() + "个");
-					for (EtfTccRecordStep step : trStepList) {
-						executor.submit(new Runnable() {
-							@Override
-							public void run() {
-								EtfTccRecordStep tr = etfTccDao.loadTccTransRecordStep(transTypeEnumClazz,
-										step.getTccEnumValue(), bizId);
-								JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
-
-								EtfTccAop.setCurrTccTryStage();
-								EtfTccAop.setCURR_INVOKE_BIZ_ID(bizId);
-								EtfTccAop.setCURR_INVOKE_TCC_ENUM_CLAZZ_NAME(transTypeEnumClazz);
-								EtfTccAop.setCURR_INVOKE_TCC_ENUM_VALUE(step.getTccEnumValue());
-
-								EtfTccAop.setCurrTccCancelStage();
-								etfTccBeanUtil.invokeEtfBean(transTypeEnumClazz, step.getTccEnumValue(), paramJsonObj);
-							}
-						});
+				boolean matchingTccTimerKey = false;
+				for (ETF_TCC_KEYS key : ETF_TCC_KEYS.values()) {
+					if (StringUtils.startsWith(expireKey, key.name())) {
+						matchingTccTimerKey = true;
 					}
-				} else if (StringUtils.startsWith(expireKey, ETF_TCC_KEYS.ETF_TCC_TIMER_CONFIRM.name())) {
-					String bizId = expireKey.substring(expireKey.indexOf("#") + 1);
+				}
 
-					String transTypeEnumClazz = expireKey.substring(expireKey.lastIndexOf(":") + 1,
-							expireKey.indexOf("#"));
-
-					List<EtfTccRecordStep> trStepList = etfTccDao.queryTccRecordStepList(transTypeEnumClazz, bizId);
-					for (EtfTccRecordStep step : trStepList) {
-						executor.submit(new Runnable() {
-							@Override
-							public void run() {
-								EtfTccRecordStep tr = etfTccDao.loadTccTransRecordStep(transTypeEnumClazz,
-										step.getTccEnumValue(), bizId);
-								JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
-
-								EtfTccAop.setCurrTccTryStage();
-								EtfTccAop.setCURR_INVOKE_BIZ_ID(bizId);
-								EtfTccAop.setCURR_INVOKE_TCC_ENUM_CLAZZ_NAME(transTypeEnumClazz);
-								EtfTccAop.setCURR_INVOKE_TCC_ENUM_VALUE(step.getTccEnumValue());
-
-								EtfTccAop.setCurrTccConfirmStage();
-								etfTccBeanUtil.invokeEtfBean(transTypeEnumClazz, step.getTccEnumValue(), paramJsonObj);
-							}
-						});
-					}
-
+				if (matchingTccTimerKey) {
+					logger.debug(String.format("redis queue: %s, body: %s", new String(channel), expireKey));
+					etfTccBeanUtil.processTccTimerExpire(expireKey);
+				} else {
+					return;
 				}
 
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
-
 		}
+
 	}
 }

@@ -5,6 +5,9 @@ import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -16,11 +19,16 @@ import org.springframework.util.ReflectionUtils;
 
 import com.alibaba.fastjson.JSONObject;
 
+import cn.panshi.etf.core.EtfDaoRedis.ETF_REDIS_KEYS;
+
 @Component
 public class EtfTransBeanUtil implements BeanPostProcessor {
 	static Logger log = LoggerFactory.getLogger(EtfTransBeanUtil.class);
+	@Resource
+	EtfDao etfDao;
 
 	Map<String, Object> etfTransBeanMap = new HashMap<>();
+
 	Map<String, Method> etpTransBeanMethodMap = new HashMap<>();
 
 	@Override
@@ -78,5 +86,27 @@ public class EtfTransBeanUtil implements BeanPostProcessor {
 		}
 		Object object = ReflectionUtils.invokeMethod(method, target, argArry2InvokeTarget);
 		log.debug(object + "");
+	}
+
+	public void processEtfTimerExpire(String expireKey) {
+		String bizId = expireKey.substring(expireKey.indexOf("#") + 1);
+
+		String transTypeEnumClazz = expireKey.substring(expireKey.lastIndexOf(":") + 1, expireKey.indexOf("@"));
+
+		String transType = expireKey.substring(expireKey.indexOf("@") + 1, expireKey.indexOf("#"));
+
+		EtfTransRecord tr = etfDao.loadEtfTransRecord(transTypeEnumClazz, transType, bizId);
+		JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
+		EtfAop.setCurrEtfBizId(bizId);
+
+		if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_FAILURE_RETRY_TIMER.name())) {
+			EtfAop.setCurrEtfTransRetryTimerKey(expireKey);
+			invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
+		} else if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_TRANS_QUERY_TIMER.name())) {
+			EtfAop.setCurrEtfTransQueryTimerKey(expireKey);
+			invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
+		} else {
+
+		}
 	}
 }
