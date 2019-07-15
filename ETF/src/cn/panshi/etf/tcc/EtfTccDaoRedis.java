@@ -1,6 +1,7 @@
 package cn.panshi.etf.tcc;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -176,8 +177,10 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	}
 
 	private void triggerTccConfirm(String tccTransBizId, String transTypeEnumClazz) {
-		String cancelTimerKey = this.calcTccConfirmTimerKey(transTypeEnumClazz, tccTransBizId);
-		redisTemplate.expire(cancelTimerKey, 100, TimeUnit.SECONDS);
+		String confirmTimerKey = this.calcTccConfirmTimerKey(transTypeEnumClazz, tccTransBizId);
+		redisTemplate.opsForValue().set(confirmTimerKey, "", 10, TimeUnit.SECONDS);
+
+		logger.debug("设置timer[" + confirmTimerKey + "]过期");
 	}
 
 	private String calcTccConfirmTimerKey(String transTypeEnumClazz, String tccTransBizId) {
@@ -229,6 +232,13 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	public void updateTccFailure() {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public List<EtfTccRecordStep> queryTccRecordStepList(String transTypeEnumClazz, String bizId) {
+		String recordKeyPrefix = ETF_TCC_KEYS.ETF_TCC_RECORD + ":" + transTypeEnumClazz + "#" + bizId + "@*";
+		Set<String> keys = redisTemplate.keys(recordKeyPrefix);
+		return redisTemplate.opsForValue().multiGet(keys);
 	}
 
 }

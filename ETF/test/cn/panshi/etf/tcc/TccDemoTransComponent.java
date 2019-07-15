@@ -26,18 +26,18 @@ public class TccDemoTransComponent {
 
 				@Override
 				protected void tccTry() {
-					System.out.println("step1 try...");
+					System.out.println("step1 try..." + vo.getCode());
 					throw new RuntimeException("step1 try 失败");
 				}
 
 				@Override
 				protected void tccConfirm() {
-					System.out.println("confirm1...");
+					System.out.println("confirm1..." + vo.getCode());
 				}
 
 				@Override
 				protected void tccCancel() {
-					System.out.println("cancel1...");
+					System.out.println("cancel1..." + vo.getCode());
 				}
 			}.executeEtfTcc();
 		} catch (EtfException4LockConcurrent e) {
@@ -57,17 +57,17 @@ public class TccDemoTransComponent {
 
 				@Override
 				protected void tccTry() {
-					System.out.println("try2...");
+					System.out.println("try2..." + vo.getCode());
 				}
 
 				@Override
 				protected void tccConfirm() {
-					System.out.println("confirm2...");
+					System.out.println("confirm2..." + vo.getCode());
 				}
 
 				@Override
 				protected void tccCancel() {
-					System.out.println("cancel2...");
+					System.out.println("cancel2..." + vo.getCode());
 				}
 			}.executeEtfTcc();
 		} catch (EtfException4LockConcurrent e) {

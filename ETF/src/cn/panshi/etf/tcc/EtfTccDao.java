@@ -1,5 +1,6 @@
 package cn.panshi.etf.tcc;
 
+import java.util.List;
 import java.util.Set;
 
 import cn.panshi.etf.core.EtfAbstractRedisLockTemplate;
@@ -35,5 +36,7 @@ public interface EtfTccDao {
 	void updateTccFailure();
 
 	void saveEtfTccRecordStep(String tccEnumClassName, String bizId, String tccEnumValue, String bizStateJson);
+
+	List<EtfTccRecordStep> queryTccRecordStepList(String transTypeEnumClazz, String bizId);
 
 }

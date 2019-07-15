@@ -25,6 +25,14 @@ public class EtfTccAop {
 		TCC_TRANS_PREPARE_STAGE.set(TCC_TRANS_STAGE.tcc_try);
 	}
 
+	public static void setCurrTccCancelStage() {
+		TCC_TRANS_PREPARE_STAGE.set(TCC_TRANS_STAGE.tcc_cancel);
+	}
+
+	public static void setCurrTccConfirmStage() {
+		TCC_TRANS_PREPARE_STAGE.set(TCC_TRANS_STAGE.tcc_confirm);
+	}
+
 	public static TCC_TRANS_STAGE getCurrTccStage() {
 		return TCC_TRANS_PREPARE_STAGE.get();
 	}
