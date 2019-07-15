@@ -98,10 +98,11 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 	}
 
 	private void exeTccTry() {
+		String tccTransBizId = EtfTccAop.getCurrBizId();
+		String transTypeEnumClazz = EtfTccAop.getCurrTccTransEnumClazzName();
+		String transTypeEnumValue = EtfTccAop.getCURR_INVOKE_TCC_ENUM_VALUE();
 		try {
 			tccTry();
-			String tccTransBizId = EtfTccAop.getCurrBizId();
-			String transTypeEnumClazz = EtfTccAop.getCurrTccTransEnumClazzName();
 
 			String key = etfTccDao.popTccTransListOnTrySuccess(tccTransBizId, transTypeEnumClazz);
 			if (key == null) {
@@ -110,7 +111,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-			etfTccDao.popTccTransListAndFlagTccFailure();
+			etfTccDao.popTccTransListAndFlagTccFailure(tccTransBizId, transTypeEnumClazz, transTypeEnumValue);
 		} finally {
 
 		}

@@ -13,6 +13,7 @@ public class TccDemoTransComponent {
 	static Logger log = LoggerFactory.getLogger(TccDemoTransComponent.class);
 	@Resource
 	EtfTccDaoRedis etfTccDaoRedis;
+
 	@EtfTcc(transEnumClazz = TccDemoEnum.class, transEnumValue = "step1")
 	public void tccStep1(TccDemoVo vo) {
 		try {
@@ -25,7 +26,8 @@ public class TccDemoTransComponent {
 
 				@Override
 				protected void tccTry() {
-					System.out.println("try1...");
+					System.out.println("step1 try...");
+					throw new RuntimeException("step1 try 失败");
 				}
 
 				@Override

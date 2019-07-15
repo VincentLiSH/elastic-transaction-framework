@@ -20,7 +20,7 @@ public interface EtfTccDao {
 
 	void triggerTccConfirmOrCancel(String tccTransBizId, String transTypeEnumClazz);
 
-	void popTccTransListAndFlagTccFailure();
+	void popTccTransListAndFlagTccFailure(String tccTransBizId, String transTypeEnumClazz, String transTypeEnumValue);
 
 	String popTccCancelListOnCancelFinished();
 
