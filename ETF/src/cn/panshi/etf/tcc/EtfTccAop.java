@@ -110,8 +110,4 @@ public class EtfTccAop {
 	public static void setCURR_INVOKE_TCC_ENUM_VALUE(String tccTransEnumValue) {
 		CURR_INVOKE_TCC_ENUM_VALUE.set(tccTransEnumValue);
 	}
-
-	public static String getCURR_INVOKE_TCC_ENUM_VALUE() {
-		return CURR_INVOKE_TCC_ENUM_VALUE.get();
-	}
 }

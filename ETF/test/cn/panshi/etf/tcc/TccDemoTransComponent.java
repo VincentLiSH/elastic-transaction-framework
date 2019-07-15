@@ -13,7 +13,6 @@ public class TccDemoTransComponent {
 	static Logger log = LoggerFactory.getLogger(TccDemoTransComponent.class);
 	@Resource
 	EtfTccDaoRedis etfTccDaoRedis;
-
 	@EtfTcc(transEnumClazz = TccDemoEnum.class, transEnumValue = "step1")
 	public void tccStep1(TccDemoVo vo) {
 		try {

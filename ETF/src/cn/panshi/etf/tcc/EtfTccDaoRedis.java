@@ -85,7 +85,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 			Enum[] enumConstants = ((Class<Enum>) Class.forName(tccEnumClassName)).getEnumConstants();
 			logger.debug("初始化Tcc try计数器：" + (enumConstants.length - 1) + "，以便TCC交易并发执行到最后一个try完成后 触发confirm或cancel");
 
-			String key = calcTccCountorList4TryKey(tccEnumClassName, bizId);
+			String key = ETF_TCC_KEYS.ETF_TCC_COUNTOR_LIST_TRY + ":" + tccEnumClassName + "#" + bizId;
 			Long countorListSize = redisTemplate.opsForList().size(key);
 			if (countorListSize == null || countorListSize == 0L) {
 				for (int i = 0; i < enumConstants.length - 1; i++) {
