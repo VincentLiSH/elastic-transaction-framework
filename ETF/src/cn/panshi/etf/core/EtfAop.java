@@ -52,7 +52,7 @@ public class EtfAop {
 				public void run() {
 					EXIST_ETF_INVOKING_CONTEXT.set(calcMethodAnn(joinPoint));
 
-					CURR_INVOKE_INPUT_PARAM.set(calcInputParamJsonIbj(joinPoint));
+					CURR_INVOKE_INPUT_PARAM.set(calcInputParamJsonObj(joinPoint));
 
 					CURR_INVOK_API_ANN.set(calcMethodAnn(joinPoint));
 
@@ -81,7 +81,7 @@ public class EtfAop {
 			EXIST_ETF_INVOKING_CONTEXT.set(calcMethodAnn(joinPoint));
 		}
 
-		CURR_INVOKE_INPUT_PARAM.set(calcInputParamJsonIbj(joinPoint));
+		CURR_INVOKE_INPUT_PARAM.set(calcInputParamJsonObj(joinPoint));
 
 		CURR_INVOK_API_ANN.set(calcMethodAnn(joinPoint));
 
@@ -111,7 +111,7 @@ public class EtfAop {
 		return etfAnn;
 	}
 
-	private JSONObject calcInputParamJsonIbj(ProceedingJoinPoint joinPoint) {
+	private JSONObject calcInputParamJsonObj(ProceedingJoinPoint joinPoint) {
 		MethodSignature sig = ((MethodSignature) joinPoint.getSignature());
 		String[] argNames = sig.getParameterNames();
 		JSONObject json = new JSONObject();

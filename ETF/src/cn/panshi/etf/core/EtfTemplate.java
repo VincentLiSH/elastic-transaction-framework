@@ -321,7 +321,8 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 		if (apiAnn.queryMaxTimes() > 0) {
 			logger.info("ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "执行完成，但需要交易查询。。。");
 			int futureSeconds = (tr.getQueryCount() == null || tr.getQueryCount().intValue() == 1)
-					? apiAnn.queryFirstDelaySeconds() : apiAnn.queryIntervalSeconds();
+					? apiAnn.queryFirstDelaySeconds()
+					: apiAnn.queryIntervalSeconds();
 			tr.setNextQueryTime(this.calcFutureTime(futureSeconds));
 			tr.setQueryCount(0);
 			etfDao.insertEtfQueryQueueAndTimer(tr);
