@@ -1,4 +1,4 @@
-package cn.panshi.etf.core;
+package cn.panshi.etf.tcc;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -17,8 +17,8 @@ import org.springframework.util.ReflectionUtils;
 import com.alibaba.fastjson.JSONObject;
 
 @Component
-public class EtfTransBeanUtil implements BeanPostProcessor {
-	static Logger log = LoggerFactory.getLogger(EtfTransBeanUtil.class);
+public class EtfTccBeanUtil implements BeanPostProcessor {
+	static Logger log = LoggerFactory.getLogger(EtfTccBeanUtil.class);
 
 	Map<String, Object> etfTransBeanMap = new HashMap<>();
 	Map<String, Method> etpTransBeanMethodMap = new HashMap<>();
@@ -34,7 +34,7 @@ public class EtfTransBeanUtil implements BeanPostProcessor {
 		Method[] methods = ReflectionUtils.getAllDeclaredMethods(bean.getClass());
 		if (methods != null) {
 			for (Method method : methods) {
-				EtfAnnTransApi ann = AnnotationUtils.findAnnotation(method, EtfAnnTransApi.class);
+				EtfTcc ann = AnnotationUtils.findAnnotation(method, EtfTcc.class);
 				if (ann == null) {
 					continue;
 				}
@@ -47,7 +47,7 @@ public class EtfTransBeanUtil implements BeanPostProcessor {
 
 				String key = ann.transEnumClazz().getName() + "." + ann.transEnumValue();
 				if (etfTransBeanMap.get(key) != null && firstTimeCheckTheMethod) {
-					throw new RuntimeException("ETF api[" + key + "]被重复定义了:[" + beanName + "." + method.getName()
+					throw new RuntimeException("TCC api[" + key + "]被重复定义了:[" + beanName + "." + method.getName()
 							+ "]和[" + etfTransBeanMap.get(key).getClass().getName() + "."
 							+ etpTransBeanMethodMap.get(key).getName() + "]");
 				}
@@ -60,8 +60,8 @@ public class EtfTransBeanUtil implements BeanPostProcessor {
 
 	private static final LocalVariableTableParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
-	public void invokeEtfBean(String transTypeEnumClazz, String transType, JSONObject paramJsonObj) {
-		String key = transTypeEnumClazz + "." + transType;
+	public void invokeEtfBean(String tccEnumClazz, String tccTransType, JSONObject paramJsonObj) {
+		String key = tccEnumClazz + "." + tccTransType;
 		Object target = etfTransBeanMap.get(key);
 		Method method = etpTransBeanMethodMap.get(key);
 

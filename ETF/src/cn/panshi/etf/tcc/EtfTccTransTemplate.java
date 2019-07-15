@@ -4,7 +4,6 @@ import java.lang.reflect.ParameterizedType;
 
 import org.apache.log4j.Logger;
 
-import cn.panshi.etf.core.EtfAbstractRedisLockTemplate;
 import cn.panshi.etf.core.EtfException4LockConcurrent;
 
 @SuppressWarnings("unchecked")
@@ -27,16 +26,16 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 		tcc_prepare, tcc_try, tcc_confirm, tcc_cancel;
 	}
 
-	public final void defEtfTccTransaction() throws EtfException4LockConcurrent {
+	public final void executeEtfTcc() throws EtfException4LockConcurrent {
 		TCC_TRANS_STAGE stage = calcCurrTccStage();
 
 		if (stage == TCC_TRANS_STAGE.tcc_prepare) {
 			this.exeTccPrepare();
 		} else {
 			String bizId = EtfTccAop.getCurrBizId();
-			EtfAbstractRedisLockTemplate etfLock = etfTccDao.getEtfTccConcurrentLock(600);
+			//			EtfAbstractRedisLockTemplate etfLock = etfTccDao.getEtfTccConcurrentLock(600);
 
-			boolean lockSuccess = etfLock.lock();
+			boolean lockSuccess = true;// etfLock.lock();
 
 			try {
 				if (!lockSuccess) {
@@ -54,9 +53,9 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 				}
 			} finally {
 				if (lockSuccess) {
-					Long unlock = etfLock.unlock();
-					logger.debug(
-							"TCC交易" + getCurrEtfTransExeKey(tccTransEnum, bizId) + "执行阶段" + stage + "后 释放锁：" + unlock);
+					//					Long unlock = etfLock.unlock();
+					//					logger.debug(
+					//							"TCC交易" + getCurrEtfTransExeKey(tccTransEnum, bizId) + "执行阶段" + stage + "后 释放锁：" + unlock);
 				}
 			}
 		}
@@ -114,7 +113,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 	}
 
 	private TCC_TRANS_STAGE calcCurrTccStage() {
-		return null;
+		return EtfTccAop.getCurrTccStage();
 	}
 
 	private String getCurrEtfTransExeKey(T_tcc_trans_enum type, String bizId) {
