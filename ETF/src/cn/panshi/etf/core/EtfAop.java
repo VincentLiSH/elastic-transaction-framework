@@ -1,11 +1,10 @@
 package cn.panshi.etf.core;
 
+import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -18,7 +17,7 @@ import com.alibaba.fastjson.JSONObject;
 @Component
 @Aspect
 public class EtfAop {
-	static Logger log = LoggerFactory.getLogger(EtfAop.class);
+	static Logger log = Logger.getLogger(EtfAop.class);
 
 	private final static ThreadLocal<EtfAnnTransApi> EXIST_ETF_INVOKING_CONTEXT = new ThreadLocal<>();
 

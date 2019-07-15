@@ -10,14 +10,14 @@ import java.util.List;
  * transTypeEnumClazz、transType、bizId三要素是逻辑主键——联合唯一索引
  */
 @SuppressWarnings("serial")
-public class EtfTransRecord implements Serializable{
+public class EtfTransRecord implements Serializable {
 	String transTypeEnumClazz;
 
 	String transType;
 
 	String bizId;
 
-	// 以上4个字段：id是物理键;transTypeEnumClazz、transType、bizId三要素是逻辑主键——联合唯一索引。
+	// 以上3个字段逻辑主键——联合唯一索引。
 
 	String bizStateJson;
 
