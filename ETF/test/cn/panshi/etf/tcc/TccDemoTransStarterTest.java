@@ -15,7 +15,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import cn.panshi.etf.core.demo.EtfDemoComponent;
 
-@SuppressWarnings({ "deprecation", "rawtypes", "unchecked" })
+@SuppressWarnings({ "rawtypes", "unchecked" })
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:spring-test*.xml" })
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
