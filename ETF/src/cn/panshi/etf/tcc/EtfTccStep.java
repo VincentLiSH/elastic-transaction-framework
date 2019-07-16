@@ -2,7 +2,7 @@ package cn.panshi.etf.tcc;
 
 import java.util.Date;
 
-public class EtfTccRecordStep {
+public class EtfTccStep {
 	String tccEnumValue;
 
 	String bizStateJson;

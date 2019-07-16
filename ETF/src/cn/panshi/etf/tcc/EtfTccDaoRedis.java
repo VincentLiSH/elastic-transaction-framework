@@ -37,10 +37,10 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	}
 
 	@Override
-	public EtfTccRecordStep loadTccTransRecordStep(String transTypeEnumClazz, String transType, String bizId) {
+	public EtfTccStep loadTccTransRecordStep(String transTypeEnumClazz, String transType, String bizId) {
 		String key = calcTccRecordStepKey(transTypeEnumClazz, transType, bizId);
 
-		return (EtfTccRecordStep) redisTemplate.opsForValue().get(key);
+		return (EtfTccStep) redisTemplate.opsForValue().get(key);
 	}
 
 	private String calcTccRecordStepKey(String tccTransEnumClazz, String tccTransEnumValue, String bizId) {
@@ -49,7 +49,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	@Override
 	public void saveEtfTccRecordStep(String tccEnumClassName, String bizId, String tccEnumValue, String bizStateJson) {
-		EtfTccRecordStep step = new EtfTccRecordStep();
+		EtfTccStep step = new EtfTccStep();
 		step.setCrtDate(new Date());
 		step.setTccEnumValue(tccEnumValue);
 		step.setBizStateJson(bizStateJson);
@@ -107,7 +107,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		executor.submit(new Runnable() {
 			@Override
 			public void run() {
-				EtfTccRecordStep tr = loadTccTransRecordStep(transTypeEnumClazz, tccTransEnumValue, tccTransBizId);
+				EtfTccStep tr = loadTccTransRecordStep(transTypeEnumClazz, tccTransEnumValue, tccTransBizId);
 				JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
 
 				EtfTccAop.setTccCurrStageTry();
@@ -177,14 +177,14 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	private void triggerTccConfirm(String tccTransBizId, String transTypeEnumClazz) {
 		logger.debug("Triggering TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] to confirm...");
 
-		List<EtfTccRecordStep> trStepList = queryTccRecordStepList(transTypeEnumClazz, tccTransBizId);
+		List<EtfTccStep> trStepList = queryTccRecordStepList(transTypeEnumClazz, tccTransBizId);
 		logger.debug(
 				"查找到需要confirm的TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] step" + trStepList.size() + "个");
-		for (EtfTccRecordStep step : trStepList) {
+		for (EtfTccStep step : trStepList) {
 			executor.submit(new Runnable() {
 				@Override
 				public void run() {
-					EtfTccRecordStep tr = loadTccTransRecordStep(transTypeEnumClazz, step.getTccEnumValue(),
+					EtfTccStep tr = loadTccTransRecordStep(transTypeEnumClazz, step.getTccEnumValue(),
 							tccTransBizId);
 					JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
 
@@ -199,14 +199,14 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	private void triggerTccCancel(String tccTransBizId, String transTypeEnumClazz) {
 		logger.debug("Triggering TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] to cancel...");
 
-		List<EtfTccRecordStep> trStepList = queryTccRecordStepList(transTypeEnumClazz, tccTransBizId);
+		List<EtfTccStep> trStepList = queryTccRecordStepList(transTypeEnumClazz, tccTransBizId);
 		logger.debug(
 				"查找到需要cancel的TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] step" + trStepList.size() + "个");
-		for (EtfTccRecordStep step : trStepList) {
+		for (EtfTccStep step : trStepList) {
 			executor.submit(new Runnable() {
 				@Override
 				public void run() {
-					EtfTccRecordStep tr = loadTccTransRecordStep(transTypeEnumClazz, step.getTccEnumValue(),
+					EtfTccStep tr = loadTccTransRecordStep(transTypeEnumClazz, step.getTccEnumValue(),
 							tccTransBizId);
 					JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
 
@@ -255,7 +255,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	}
 
 	@Override
-	public List<EtfTccRecordStep> queryTccRecordStepList(String transTypeEnumClazz, String bizId) {
+	public List<EtfTccStep> queryTccRecordStepList(String transTypeEnumClazz, String bizId) {
 		String recordKeyPrefix = ETF_TCC_KEYS.ETF_TCC_STEP + ":" + transTypeEnumClazz + "#" + bizId + "@*";
 		Set<String> keys = redisTemplate.keys(recordKeyPrefix);
 		return redisTemplate.opsForValue().multiGet(keys);
