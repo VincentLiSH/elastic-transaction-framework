@@ -63,11 +63,10 @@ ETF相对于其它同类项目的特点/优势：
 开发人员只需扩展框架提供的TccTemplate模板，实现其中的接口规格，就可以实现一个TCC交易组件；
 
 ## ETF框架的低侵入性编程模型
-贴一段代码展示ETF如何很低的侵入性对现有业务代码做弹性事务增强：
+贴一段代码展示ETF如何低侵入性的对业务代码做弹性事务增强：
 * 对业务组件API的方法签名（参数、返回值）完全不做限制，只需添加@EtfAnnTransApi 配置重试和查询回调规则
 * 只需把业务逻辑按照EtfTemplateWithRedisDao的规范分解填充到各个回调接口中，即可获得交易重试和交易查询回调。
 * 不难看出，这是一个“不可恢复交易”型组件，因此ETF提供的是retry和query机制来确保交易（在暂时出错的情况下 也能尽量）执行成功。
-* 
 
 ``` java
 @EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "AndThen_Invoke_Another_ETF", //
@@ -114,4 +113,98 @@ ETF相对于其它同类项目的特点/优势：
 			}
 		};
 		return etfTemplate.executeEtfTransaction();
+	}
+
+再贴一段“可恢复型TCC交易”组件示例代码：
+``` java
+        @Resource
+	TccDemoTransComponent tccDemoTransComponent;
+	@Resource
+	EtfTccDaoRedis etfTccDaoRedis;
+
+	public void startTccFlow1() throws EtfTccException4PrepareStage, EtfTccException4StartStage {
+		TccDemoVo vo = new TccDemoVo();
+		vo.setCode("unit test");
+
+		TccTransStarter<TccDemoEnum> starter = new TccTransStarter<TccDemoEnum>(etfTccDaoRedis);
+
+		starter.prepareTccTrans(new TccTransPrepareStatement() {
+			@Override
+			public void doPrepare() {
+				tccDemoTransComponent.tccStep1(vo);
+			}
+		});
+
+		starter.prepareTccTrans(new TccTransPrepareStatement() {
+			@Override
+			public void doPrepare() {
+				tccDemoTransComponent.tccStep2(vo);
+			}
+		});
+
+		starter.startTccTransList();
+	}
+``` java
+        @Resource
+	EtfTccDaoRedis etfTccDaoRedis;
+
+	@EtfTcc(transEnumClazz = TccDemoEnum.class, transEnumValue = "step1")
+	public void tccStep1(TccDemoVo vo) {
+		try {
+			new EtfTccTransTemplate<TccDemoEnum>(etfTccDaoRedis) {
+
+				@Override
+				protected String calcTccTransBizId() {
+					return vo.getCode();
+				}
+
+				@Override
+				protected void tccTry() {
+					System.out.println("step1 try..." + vo.getCode());
+					throw new RuntimeException("step1 try 失败");
+				}
+
+				@Override
+				protected void tccConfirm() {
+					System.out.println("confirm1..." + vo.getCode());
+				}
+
+				@Override
+				protected void tccCancel() {
+					System.out.println("cancel1..." + vo.getCode());
+				}
+			}.executeEtfTcc();
+		} catch (EtfException4LockConcurrent e) {
+			e.printStackTrace();
+		}
+	}
+
+	@EtfTcc(transEnumClazz = TccDemoEnum.class, transEnumValue = "step2")
+	public void tccStep2(TccDemoVo vo) {
+		try {
+			new EtfTccTransTemplate<TccDemoEnum>(etfTccDaoRedis) {
+
+				@Override
+				protected String calcTccTransBizId() {
+					return vo.getCode();
+				}
+
+				@Override
+				protected void tccTry() {
+					System.out.println("try2..." + vo.getCode());
+				}
+
+				@Override
+				protected void tccConfirm() {
+					System.out.println("confirm2..." + vo.getCode());
+				}
+
+				@Override
+				protected void tccCancel() {
+					System.out.println("cancel2..." + vo.getCode());
+				}
+			}.executeEtfTcc();
+		} catch (EtfException4LockConcurrent e) {
+			e.printStackTrace();
+		}
 	}
