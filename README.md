@@ -114,7 +114,7 @@ ETF相对于其它同类项目的特点/优势：
 		};
 		return etfTemplate.executeEtfTransaction();
 	}
-
+```
 再贴一段“可恢复型TCC交易”组件示例代码：
 ``` java
         @Resource
@@ -144,6 +144,8 @@ ETF相对于其它同类项目的特点/优势：
 
 		starter.startTccTransList();
 	}
+```
+
 ``` java
         @Resource
 	EtfTccDaoRedis etfTccDaoRedis;
@@ -208,3 +210,4 @@ ETF相对于其它同类项目的特点/优势：
 			e.printStackTrace();
 		}
 	}
+``` 
