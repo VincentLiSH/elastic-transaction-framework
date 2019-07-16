@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSONObject;
 
 import cn.panshi.etf.core.EtfAbstractRedisLockTemplate;
+import cn.panshi.etf.tcc.EtfTccTransTemplate.TCC_TRANS_STAGE;
 
 @Component
 @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -28,6 +29,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	EtfTccBeanUtil etfTccBeanUtil;
 
 	public enum ETF_TCC_KEYS {
+		ETF_TCC_LOCK, //
 		ETF_TCC_PREPARE_SET, //
 		ETF_TCC_STEP, //
 		ETF_TCC_COUNTOR_LIST_TRY, //try计数器，当最后一个try完成时返回null 于是触发所有交易confirm或cancel
@@ -123,7 +125,13 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		return new EtfAbstractRedisLockTemplate(redisTemplate, expireSeconds, UUID.randomUUID().toString()) {
 			@Override
 			protected String constructKey() {
-				return null; //return genEtfInvokeKey(etfTransTypeEnumClass, etfTransTypeEnumValue, bizId);
+				TCC_TRANS_STAGE currTccStage = EtfTccAop.getCurrTccStage();
+				String etfTransTypeEnumClass = EtfTccAop.getTCC_CURR_TRANS_ENUM_CLAZZ_NAME();
+				String etfTransTypeEnumValue = EtfTccAop.getTCC_CURR_ENUM_VALUE();
+				String bizId = EtfTccAop.getTCC_CURR_BIZ_ID();
+
+				return ETF_TCC_KEYS.ETF_TCC_LOCK + ":" + etfTransTypeEnumClass + "#" + bizId + "@"
+						+ etfTransTypeEnumValue + "$" + currTccStage;
 			}
 		};
 	}
@@ -184,8 +192,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 			executor.submit(new Runnable() {
 				@Override
 				public void run() {
-					EtfTccStep tr = loadTccTransRecordStep(transTypeEnumClazz, step.getTccEnumValue(),
-							tccTransBizId);
+					EtfTccStep tr = loadTccTransRecordStep(transTypeEnumClazz, step.getTccEnumValue(), tccTransBizId);
 					JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
 
 					EtfTccAop.setTccCurrStageConfirm();
@@ -206,8 +213,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 			executor.submit(new Runnable() {
 				@Override
 				public void run() {
-					EtfTccStep tr = loadTccTransRecordStep(transTypeEnumClazz, step.getTccEnumValue(),
-							tccTransBizId);
+					EtfTccStep tr = loadTccTransRecordStep(transTypeEnumClazz, step.getTccEnumValue(), tccTransBizId);
 					JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
 
 					EtfTccAop.setTccCurrStageCancel();

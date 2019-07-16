@@ -4,6 +4,7 @@ import java.lang.reflect.ParameterizedType;
 
 import org.apache.log4j.Logger;
 
+import cn.panshi.etf.core.EtfAbstractRedisLockTemplate;
 import cn.panshi.etf.core.EtfException4LockConcurrent;
 
 @SuppressWarnings("unchecked")
@@ -14,8 +15,6 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 			.getGenericSuperclass()).getActualTypeArguments()[0];
 
 	EtfTccDao etfTccDao;
-
-	private T_tcc_trans_enum tccTransEnum;
 
 	protected EtfTccTransTemplate(EtfTccDao etfTccDao) {
 		super();
@@ -32,14 +31,14 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 		if (stage == TCC_TRANS_STAGE.tcc_prepare) {
 			this.exeTccPrepare();
 		} else {
-			String bizId = EtfTccAop.getTCC_CURR_BIZ_ID();
-			//			EtfAbstractRedisLockTemplate etfLock = etfTccDao.getEtfTccConcurrentLock(600);
 
-			boolean lockSuccess = true;// etfLock.lock();
+			EtfAbstractRedisLockTemplate etfLock = etfTccDao.getEtfTccConcurrentLock(60);
+
+			boolean lockSuccess = etfLock.lock();
 
 			try {
 				if (!lockSuccess) {
-					String error = "TCC交易" + getCurrEtfTransExeKey(tccTransEnum, bizId) + "获取锁失败";
+					String error = "TCC交易[" + getCurrEtfTransExeKey() + "]stage " + stage + " 获取锁失败";
 					logger.warn(error);
 					throw new EtfException4LockConcurrent(error);
 				}
@@ -53,9 +52,8 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 				}
 			} finally {
 				if (lockSuccess) {
-					//					Long unlock = etfLock.unlock();
-					//					logger.debug(
-					//							"TCC交易" + getCurrEtfTransExeKey(tccTransEnum, bizId) + "执行阶段" + stage + "后 释放锁：" + unlock);
+					Long unlock = etfLock.unlock();
+					logger.debug("TCC交易[" + getCurrEtfTransExeKey() + "]执行stage " + stage + " 后 释放锁：" + unlock);
 				}
 			}
 		}
@@ -121,8 +119,11 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 		return EtfTccAop.getCurrTccStage();
 	}
 
-	private String getCurrEtfTransExeKey(T_tcc_trans_enum type, String bizId) {
-		return type.getClass().getName() + "." + type.toString() + "#" + bizId;
+	private String getCurrEtfTransExeKey() {
+		String bizId = EtfTccAop.getTCC_CURR_BIZ_ID();
+		String transTypeEnumClazz = EtfTccAop.getTCC_CURR_TRANS_ENUM_CLAZZ_NAME();
+		String transTypeEnumValue = EtfTccAop.getTCC_CURR_ENUM_VALUE();
+		return transTypeEnumClazz + "#" + bizId + "@" + transTypeEnumValue;
 	}
 
 	protected abstract String calcTccTransBizId();
