@@ -69,7 +69,11 @@ ETF相对于其它同类项目的特点/优势：
 * 不难看出，这是一个“不可恢复交易”型组件，因此ETF提供的是retry和query机制来确保交易（在暂时出错的情况下 也能尽量）执行成功。
 
 ``` java
-@EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "AndThen_Invoke_Another_ETF", //
+public enum EtfDemoEnum {
+	TX_simple, TX_need_retry, TX_need_trans_query_on_success, AndThen_Invoke_Another_ETF, TX_simple_Nested;
+}
+
+        @EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "AndThen_Invoke_Another_ETF", //
 			queryMaxTimes = 5, queryFirstDelaySeconds = 8, queryIntervalSeconds = 60, //
 			retryMaxTimes = 3, retryFirstDelaySeconds = 3, retryIntervalSeconds = 5)
 	public String doSometh_AndThen_Invoke_Another_ETF(EtfDemoVo etfDemoVo) throws Exception {
@@ -117,6 +121,10 @@ ETF相对于其它同类项目的特点/优势：
 ```
 再贴一段“可恢复型TCC交易”组件示例代码：
 ``` java
+	public enum TccDemoEnum {
+		step1, step2;
+	}
+
         @Resource
 	TccDemoTransComponent tccDemoTransComponent;
 	@Resource
