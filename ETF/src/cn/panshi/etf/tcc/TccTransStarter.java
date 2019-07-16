@@ -112,7 +112,7 @@ public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum
 		}
 
 		for (String tccTransEnumValue : tccTransKeyList) {
-			etfTccDao.startTccTransByPreparedKey(tccTransEnumClass.getName(), tccTransEnumValue, tccTransBizId);
+			etfTccDao.startTccTransAsynch(tccTransEnumClass.getName(), tccTransEnumValue, tccTransBizId);
 		}
 	}
 

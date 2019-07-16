@@ -46,7 +46,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	}
 
 	private String calcTccRecordStepKey(String tccTransEnumClazz, String tccTransEnumValue, String bizId) {
-		return ETF_TCC_KEYS.ETF_TCC_STEP + ":" + tccTransEnumClazz + "#" + bizId + "@" + tccTransEnumValue;
+		return ETF_TCC_KEYS.ETF_TCC_STEP + ":" + tccTransEnumClazz + ":#" + bizId + ":@" + tccTransEnumValue;
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	@Override
 	public boolean addEtfTccTransPrepareList(String tccEnumClassName, String bizId, String tccEnumValue)
 			throws EtfTccException4PrepareStage {
-		String tccPrepareListKey = ETF_TCC_KEYS.ETF_TCC_PREPARE_SET + ":" + tccEnumClassName + "#" + bizId;
+		String tccPrepareListKey = calcTccPrepareSetKey(tccEnumClassName, bizId);
 		boolean checkExist = redisTemplate.opsForSet().isMember(tccPrepareListKey, tccEnumValue);
 		if (checkExist) {
 			return false;
@@ -76,6 +76,10 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		}
 	}
 
+	protected String calcTccPrepareSetKey(String tccEnumClassName, String bizId) {
+		return ETF_TCC_KEYS.ETF_TCC_PREPARE_SET + ":" + tccEnumClassName + ":#" + bizId;
+	}
+
 	/**
 	 * memo:初始化Tcc try计数器，以便TCC交易并发执行到最后一个try完成后 触发confirm或cancel
 	 */
@@ -84,11 +88,11 @@ public class EtfTccDaoRedis implements EtfTccDao {
 			Enum[] enumConstants = ((Class<Enum>) Class.forName(tccEnumClassName)).getEnumConstants();
 			logger.debug("初始化Tcc try计数器：" + (enumConstants.length - 1) + "，以便TCC交易并发执行到最后一个try完成后 触发confirm或cancel");
 
-			String key = ETF_TCC_KEYS.ETF_TCC_COUNTOR_LIST_TRY + ":" + tccEnumClassName + "#" + bizId;
-			Long countorListSize = redisTemplate.opsForList().size(key);
+			String tccTryListKey = calcTccCountorList4TryKey(tccEnumClassName, bizId);
+			Long countorListSize = redisTemplate.opsForList().size(tccTryListKey);
 			if (countorListSize == null || countorListSize == 0L) {
 				for (int i = 0; i < enumConstants.length - 1; i++) {
-					redisTemplate.opsForList().leftPush(key, "" + (i + 1));
+					redisTemplate.opsForList().leftPush(tccTryListKey, "" + (i + 1));
 				}
 			}
 
@@ -100,12 +104,11 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	@Override
 	public Set<String> findTccTransList2Start(String tccEnumClassName, String bizId) {
-		return redisTemplate.opsForSet()
-				.members(ETF_TCC_KEYS.ETF_TCC_PREPARE_SET + ":" + tccEnumClassName + "#" + bizId);
+		return redisTemplate.opsForSet().members(calcTccPrepareSetKey(tccEnumClassName, bizId));
 	}
 
 	@Override
-	public void startTccTransByPreparedKey(String transTypeEnumClazz, String tccTransEnumValue, String tccTransBizId) {
+	public void startTccTransAsynch(String transTypeEnumClazz, String tccTransEnumValue, String tccTransBizId) {
 		executor.submit(new Runnable() {
 			@Override
 			public void run() {
@@ -121,8 +124,8 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	}
 
 	@Override
-	public EtfAbstractRedisLockTemplate getEtfTccConcurrentLock(int expireSeconds) {
-		return new EtfAbstractRedisLockTemplate(redisTemplate, expireSeconds, UUID.randomUUID().toString()) {
+	public EtfAbstractRedisLockTemplate getEtfTccConcurrentLock(int lockAutoExpireSeconds) {
+		return new EtfAbstractRedisLockTemplate(redisTemplate, lockAutoExpireSeconds, UUID.randomUUID().toString()) {
 			@Override
 			protected String constructKey() {
 				TCC_TRANS_STAGE currTccStage = EtfTccAop.getCurrTccStage();
@@ -130,7 +133,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 				String etfTransTypeEnumValue = EtfTccAop.getTCC_CURR_ENUM_VALUE();
 				String bizId = EtfTccAop.getTCC_CURR_BIZ_ID();
 
-				return ETF_TCC_KEYS.ETF_TCC_LOCK + ":" + etfTransTypeEnumClass + "#" + bizId + "@"
+				return ETF_TCC_KEYS.ETF_TCC_LOCK + ":" + etfTransTypeEnumClass + ":#" + bizId + ":@"
 						+ etfTransTypeEnumValue + "$" + currTccStage;
 			}
 		};
@@ -162,11 +165,11 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	}
 
 	private String calcTccFailureFlagListKey(String transTypeEnumClazz, String tccTransBizId) {
-		return ETF_TCC_KEYS.ETF_TCC_FAILURE_FLAG_LIST + ":" + transTypeEnumClazz + "#" + tccTransBizId;
+		return ETF_TCC_KEYS.ETF_TCC_FAILURE_FLAG_LIST + ":" + transTypeEnumClazz + ":#" + tccTransBizId;
 	}
 
 	protected String calcTccCountorList4TryKey(String tccTransEnumClazzName, String bizId) {
-		String tccTryListKey = ETF_TCC_KEYS.ETF_TCC_COUNTOR_LIST_TRY + ":" + tccTransEnumClazzName + "#" + bizId;
+		String tccTryListKey = ETF_TCC_KEYS.ETF_TCC_COUNTOR_LIST_TRY + ":" + tccTransEnumClazzName + ":#" + bizId;
 		return tccTryListKey;
 	}
 
@@ -260,8 +263,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	}
 
-	@Override
-	public List<EtfTccStep> queryTccRecordStepList(String transTypeEnumClazz, String bizId) {
+	private List<EtfTccStep> queryTccRecordStepList(String transTypeEnumClazz, String bizId) {
 		String recordKeyPrefix = ETF_TCC_KEYS.ETF_TCC_STEP + ":" + transTypeEnumClazz + "#" + bizId + "@*";
 		Set<String> keys = redisTemplate.keys(recordKeyPrefix);
 		return redisTemplate.opsForValue().multiGet(keys);

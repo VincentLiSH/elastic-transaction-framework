@@ -38,7 +38,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 
 			try {
 				if (!lockSuccess) {
-					String error = "TCC交易[" + getCurrEtfTransExeKey() + "]stage " + stage + " 获取锁失败";
+					String error = "TCC交易[" + getCurrEtfTransExeKey() + "]在" + stage + "阶段获取并发锁失败";
 					logger.warn(error);
 					throw new EtfException4LockConcurrent(error);
 				}
@@ -53,7 +53,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 			} finally {
 				if (lockSuccess) {
 					Long unlock = etfLock.unlock();
-					logger.debug("TCC交易[" + getCurrEtfTransExeKey() + "]执行stage " + stage + " 后 释放锁：" + unlock);
+					logger.debug("TCC交易[" + getCurrEtfTransExeKey() + "]执行" + stage + "后 释放锁：" + unlock);
 				}
 			}
 		}
