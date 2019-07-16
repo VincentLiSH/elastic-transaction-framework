@@ -16,7 +16,6 @@ import cn.panshi.etf.core.EtfDaoRedis.ETF_REDIS_KEYS;
 import cn.panshi.etf.core.EtfTransBeanUtil;
 import cn.panshi.etf.tcc.EtfTccBeanUtil;
 import cn.panshi.etf.tcc.EtfTccDao;
-import cn.panshi.etf.tcc.EtfTccDaoRedis.ETF_TCC_KEYS;
 
 @Configuration
 public class EtfTccRedisExpireEventListener {
@@ -58,21 +57,6 @@ public class EtfTccRedisExpireEventListener {
 					etfTransBeanUtil.processEtfTimerExpire(expireKey);
 					return;
 				}
-
-				boolean matchingTccTimerKey = false;
-				for (ETF_TCC_KEYS key : ETF_TCC_KEYS.values()) {
-					if (StringUtils.startsWith(expireKey, key.name())) {
-						matchingTccTimerKey = true;
-					}
-				}
-
-				if (matchingTccTimerKey) {
-					logger.debug(String.format("redis queue: %s, body: %s", new String(channel), expireKey));
-					etfTccBeanUtil.processTccTimerExpire(expireKey);
-				} else {
-					return;
-				}
-
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}

@@ -15,73 +15,38 @@ import cn.panshi.etf.tcc.EtfTccTransTemplate.TCC_TRANS_STAGE;
 @Aspect
 public class EtfTccAop {
 	static Logger log = Logger.getLogger(EtfTccAop.class);
-	private final static ThreadLocal<TCC_TRANS_STAGE> TCC_TRANS_PREPARE_STAGE = new ThreadLocal<>();
+	private final static ThreadLocal<TCC_TRANS_STAGE> TL_TCC_CURR_STAGE = new ThreadLocal<>();
+	private final static ThreadLocal<String> TL_TCC_CURR_BIZ_ID = new ThreadLocal<>();
 
-	public static void setCurrTccPrepareStage() {
-		TCC_TRANS_PREPARE_STAGE.set(TCC_TRANS_STAGE.tcc_prepare);
-	}
-
-	public static void setCurrTccTryStage() {
-		TCC_TRANS_PREPARE_STAGE.set(TCC_TRANS_STAGE.tcc_try);
-	}
-
-	public static void setCurrTccCancelStage() {
-		TCC_TRANS_PREPARE_STAGE.set(TCC_TRANS_STAGE.tcc_cancel);
-	}
-
-	public static void setCurrTccConfirmStage() {
-		TCC_TRANS_PREPARE_STAGE.set(TCC_TRANS_STAGE.tcc_confirm);
-	}
-
-	public static TCC_TRANS_STAGE getCurrTccStage() {
-		return TCC_TRANS_PREPARE_STAGE.get();
-	}
-
-	private final static ThreadLocal<String> CURR_INVOKE_BIZ_ID = new ThreadLocal<>();
-
-	public static String getCurrBizId() {
-		return CURR_INVOKE_BIZ_ID.get();
-	}
-
-	private final static ThreadLocal<EtfTcc> CURR_INVOK_API_ANN = new ThreadLocal<>();
-
-	private final static ThreadLocal<JSONObject> CURR_INVOKE_INPUT_PARAM = new ThreadLocal<>();
-
-	private final static ThreadLocal<String> CURR_INVOKE_TCC_ENUM_CLAZZ_NAME = new ThreadLocal<>();
-	private final static ThreadLocal<String> CURR_INVOKE_TCC_ENUM_VALUE = new ThreadLocal<>();
-
-	public static String getCurrTccTransEnumClazzName() {
-		return CURR_INVOKE_TCC_ENUM_CLAZZ_NAME.get();
-	}
+	private final static ThreadLocal<JSONObject> TL_TCC_CURR_INPUT_PARAM = new ThreadLocal<>();
+	private final static ThreadLocal<String> TL_TCC_CURR_TRANS_ENUM_CLAZZ_NAME = new ThreadLocal<>();
+	private final static ThreadLocal<String> TL_TCC_CURR_TRANS_ENUM_VALUE = new ThreadLocal<>();
 
 	@Around("@annotation(cn.panshi.etf.tcc.EtfTcc)")
 	public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
 		EtfTcc ann = calcMethodAnn(joinPoint);
-		if (TCC_TRANS_PREPARE_STAGE.get() != null) {
 
+		JSONObject inputParamJsonObj = calcInputParamJsonObj(joinPoint);
+
+		if (TL_TCC_CURR_STAGE.get() != null) {
 			TccTransStarter.setTCC_ENUM_TYPE_OF_JUST_PREPARED_TRANS(ann.transEnumClazz());
 			TccTransStarter.setTCC_ENUM_VALUE_OF_JUST_PREPARED_TRANS(ann.transEnumValue());
+			TccTransStarter.setTCC_CURR_INPUT_PARAM(inputParamJsonObj);
 		}
 
-		CURR_INVOKE_INPUT_PARAM.set(calcInputParamJsonObj(joinPoint));
-
-		CURR_INVOK_API_ANN.set(ann);
+		TL_TCC_CURR_INPUT_PARAM.set(inputParamJsonObj);
+		TL_TCC_CURR_TRANS_ENUM_CLAZZ_NAME.set(ann.transEnumClazz().getName());
+		TL_TCC_CURR_TRANS_ENUM_VALUE.set(ann.transEnumValue());
 
 		try {
 			return joinPoint.proceed();
 		} finally {
+			TL_TCC_CURR_STAGE.remove();
+			TL_TCC_CURR_BIZ_ID.remove();
 
-			if (TCC_TRANS_PREPARE_STAGE.get() == null) {
-
-				CURR_INVOK_API_ANN.remove();
-
-				CURR_INVOKE_INPUT_PARAM.remove();
-
-				CURR_INVOKE_BIZ_ID.remove();
-			} else {
-				log.debug("TCC_TRANS_PREPARE_STAGE准备阶段 不删除TCC上下文");
-			}
-
+			TL_TCC_CURR_INPUT_PARAM.remove();
+			TL_TCC_CURR_TRANS_ENUM_CLAZZ_NAME.remove();
+			TL_TCC_CURR_TRANS_ENUM_VALUE.remove();
 		}
 	}
 
@@ -103,23 +68,43 @@ public class EtfTccAop {
 		return json;
 	}
 
-	public static JSONObject getCURR_INVOKE_INPUT_PARAM() {
-		return CURR_INVOKE_INPUT_PARAM.get();
+	public static void setTccCurrStagePrepare() {
+		TL_TCC_CURR_STAGE.set(TCC_TRANS_STAGE.tcc_prepare);
 	}
 
-	public static void setCURR_INVOKE_BIZ_ID(String tccTransBizId) {
-		CURR_INVOKE_BIZ_ID.set(tccTransBizId);
+	public static void setTccCurrStageTry() {
+		TL_TCC_CURR_STAGE.set(TCC_TRANS_STAGE.tcc_try);
 	}
 
-	public static void setCURR_INVOKE_TCC_ENUM_CLAZZ_NAME(String transTypeEnumClazz) {
-		CURR_INVOKE_TCC_ENUM_CLAZZ_NAME.set(transTypeEnumClazz);
+	public static void setTccCurrStageCancel() {
+		TL_TCC_CURR_STAGE.set(TCC_TRANS_STAGE.tcc_cancel);
 	}
 
-	public static void setCURR_INVOKE_TCC_ENUM_VALUE(String tccTransEnumValue) {
-		CURR_INVOKE_TCC_ENUM_VALUE.set(tccTransEnumValue);
+	public static void setTccCurrStageConfirm() {
+		TL_TCC_CURR_STAGE.set(TCC_TRANS_STAGE.tcc_confirm);
 	}
 
-	public static String getCURR_INVOKE_TCC_ENUM_VALUE() {
-		return CURR_INVOKE_TCC_ENUM_VALUE.get();
+	public static TCC_TRANS_STAGE getCurrTccStage() {
+		return TL_TCC_CURR_STAGE.get();
+	}
+
+	public static String getTCC_CURR_BIZ_ID() {
+		return TL_TCC_CURR_BIZ_ID.get();
+	}
+
+	public static void setTCC_CURR_BIZ_ID(String tccTransBizId) {
+		TL_TCC_CURR_BIZ_ID.set(tccTransBizId);
+	}
+
+	public static String getTCC_CURR_TRANS_ENUM_CLAZZ_NAME() {
+		return TL_TCC_CURR_TRANS_ENUM_CLAZZ_NAME.get();
+	}
+
+	public static JSONObject getTCC_CURR_INPUT_PARAM() {
+		return TL_TCC_CURR_INPUT_PARAM.get();
+	}
+
+	public static String getTCC_CURR_ENUM_VALUE() {
+		return TL_TCC_CURR_TRANS_ENUM_VALUE.get();
 	}
 }

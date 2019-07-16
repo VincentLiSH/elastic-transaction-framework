@@ -9,7 +9,6 @@ import com.alibaba.fastjson.JSONObject;
 
 /**
  * @author 李英权 <49069554@qq.com>
- * 
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum_type>> {
@@ -17,6 +16,7 @@ public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum
 
 	private final static ThreadLocal<Class<? extends Enum>> TCC_ENUM_TYPE_OF_JUST_PREPARED_TRANS = new ThreadLocal<>();
 	private final static ThreadLocal<String> TCC_ENUM_VALUE_OF_JUST_PREPARED_TRANS = new ThreadLocal<>();
+	private final static ThreadLocal<JSONObject> TCC_CURR_INPUT_PARAM = new ThreadLocal<>();
 
 	private EtfTccDao etfTccDao;
 
@@ -31,7 +31,7 @@ public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum
 
 	public final void prepareTccTrans(TccTransPrepareStatement ps) throws EtfTccException4PrepareStage {
 		try {
-			EtfTccAop.setCurrTccPrepareStage();
+			EtfTccAop.setTccCurrStagePrepare();
 
 			String bizId = invokePrepare2GetBizId(ps);
 
@@ -82,7 +82,7 @@ public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum
 						+ "]准备失败，请确保TCC交易API正确配置了@EtfTcc，不存在重复类型！");
 			}
 
-			JSONObject inputParam = EtfTccAop.getCURR_INVOKE_INPUT_PARAM();
+			JSONObject inputParam = TCC_CURR_INPUT_PARAM.get();
 			etfTccDao.saveEtfTccRecordStep(tccEnumType.getName(), bizId, tccEnumValue,
 					inputParam == null ? null : inputParam.toJSONString());
 
@@ -90,13 +90,14 @@ public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum
 		} finally {
 			TCC_ENUM_TYPE_OF_JUST_PREPARED_TRANS.remove();
 			TCC_ENUM_VALUE_OF_JUST_PREPARED_TRANS.remove();
+			TCC_CURR_INPUT_PARAM.remove();
 		}
 	}
 
 	protected String invokePrepare2GetBizId(TccTransPrepareStatement ps) {
 		try {
 			ps.doPrepare();//会被EtfTccAop拦截 设置TCC交易类型上下文到ThreadLocal，供下面的代码做交易类型检查
-		} catch (EtfTccException4ReturnBizCode e) {//EtfTccAop抛出此异常 隐式的返回bizId，避免要求子类显式的返回  造成框架侵入性过高和使用不便！
+		} catch (EtfTccException4ReturnBizCode e) { //EtfTccAop抛出此异常 隐式的返回bizId，避免要求子类显式的返回  造成框架侵入性过高和使用不便！
 			return e.getBizId();
 		}
 		return null;
@@ -123,6 +124,10 @@ public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum
 
 	public static void setTCC_ENUM_VALUE_OF_JUST_PREPARED_TRANS(String transEnumValue) {
 		TCC_ENUM_VALUE_OF_JUST_PREPARED_TRANS.set(transEnumValue);
+	}
+
+	public static void setTCC_CURR_INPUT_PARAM(JSONObject inputParamJSON) {
+		TCC_CURR_INPUT_PARAM.set(inputParamJSON);
 	}
 
 }

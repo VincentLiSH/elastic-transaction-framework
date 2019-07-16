@@ -3,7 +3,7 @@ package cn.panshi.etf.tcc;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
 import javax.annotation.Resource;
 
@@ -29,15 +29,10 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	public enum ETF_TCC_KEYS {
 		ETF_TCC_PREPARE_SET, //
-		ETF_TCC_TRY_LIST, //
-		ETF_TCC_CONFIRM_LIST, //
-		ETF_TCC_RECORD, //
-		ETF_TCC_TIMER_TRY, //
-		ETF_TCC_TIMER_CONFIRM, //
-		ETF_TCC_TIMER_CANCEL, //
+		ETF_TCC_STEP, //
 		ETF_TCC_COUNTOR_LIST_TRY, //try计数器，当最后一个try完成时返回null 于是触发所有交易confirm或cancel
 		ETF_TCC_COUNTOR_LIST_CONFIRM, //confirm计数器，当最后一个confirm完成时返回null 于是触发TCC完成
-		ETF_TCC_FAILURE_FLAG;//整个TCC事务失败的标志位
+		ETF_TCC_FAILURE_FLAG_LIST;//整个TCC事务失败的标志位
 
 	}
 
@@ -49,7 +44,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	}
 
 	private String calcTccRecordStepKey(String tccTransEnumClazz, String tccTransEnumValue, String bizId) {
-		return ETF_TCC_KEYS.ETF_TCC_RECORD + ":" + tccTransEnumClazz + "#" + bizId + "@" + tccTransEnumValue;
+		return ETF_TCC_KEYS.ETF_TCC_STEP + ":" + tccTransEnumClazz + "#" + bizId + "@" + tccTransEnumValue;
 	}
 
 	@Override
@@ -115,10 +110,8 @@ public class EtfTccDaoRedis implements EtfTccDao {
 				EtfTccRecordStep tr = loadTccTransRecordStep(transTypeEnumClazz, tccTransEnumValue, tccTransBizId);
 				JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
 
-				EtfTccAop.setCurrTccTryStage();
-				EtfTccAop.setCURR_INVOKE_BIZ_ID(tccTransBizId);
-				EtfTccAop.setCURR_INVOKE_TCC_ENUM_CLAZZ_NAME(transTypeEnumClazz);
-				EtfTccAop.setCURR_INVOKE_TCC_ENUM_VALUE(tccTransEnumValue);
+				EtfTccAop.setTccCurrStageTry();
+				EtfTccAop.setTCC_CURR_BIZ_ID(tccTransBizId);
 				etfTccBeanUtil.invokeEtfBean(transTypeEnumClazz, tccTransEnumValue, paramJsonObj);
 			}
 		});
@@ -127,8 +120,12 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	@Override
 	public EtfAbstractRedisLockTemplate getEtfTccConcurrentLock(int expireSeconds) {
-		// TODO Auto-generated method stub
-		return null;
+		return new EtfAbstractRedisLockTemplate(redisTemplate, expireSeconds, UUID.randomUUID().toString()) {
+			@Override
+			protected String constructKey() {
+				return null; //return genEtfInvokeKey(etfTransTypeEnumClass, etfTransTypeEnumValue, bizId);
+			}
+		};
 	}
 
 	@Override
@@ -141,13 +138,14 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	@Override
 	public void popTccTransListAndFlagTccFailure(String tccTransBizId, String transTypeEnumClazz,
 			String transTypeEnumValue) {
-		String tccFailureFlagKey = this.calcTccFailureFlagKey(transTypeEnumClazz, tccTransBizId);
-		redisTemplate.opsForValue().set(tccFailureFlagKey,
-				"The whole TCC" + " was flag as failure for step " + transTypeEnumValue);
-
 		String tccTryListKey = calcTccCountorList4TryKey(transTypeEnumClazz, tccTransBizId);
-		Object popValue = redisTemplate.opsForList().rightPop(tccTryListKey);
-		if (popValue == null) {
+		String tccFailureFlagListKey = this.calcTccFailureFlagListKey(transTypeEnumClazz, tccTransBizId);
+
+		//		redisTemplate.opsForValue().set(tccFailureFlagKey,
+		//				"The whole TCC" + " was flag as failure for step " + transTypeEnumValue);
+
+		Object result = redisTemplate.opsForList().rightPopAndLeftPush(tccTryListKey, tccFailureFlagListKey);
+		if (result == null) {
 			logger.info("最后一个try失败，需要触发所有相关交易cancel");
 
 			triggerTccCancel(tccTransBizId, transTypeEnumClazz);
@@ -155,8 +153,8 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	}
 
-	private String calcTccFailureFlagKey(String transTypeEnumClazz, String tccTransBizId) {
-		return ETF_TCC_KEYS.ETF_TCC_FAILURE_FLAG + ":" + transTypeEnumClazz + "#" + tccTransBizId;
+	private String calcTccFailureFlagListKey(String transTypeEnumClazz, String tccTransBizId) {
+		return ETF_TCC_KEYS.ETF_TCC_FAILURE_FLAG_LIST + ":" + transTypeEnumClazz + "#" + tccTransBizId;
 	}
 
 	protected String calcTccCountorList4TryKey(String tccTransEnumClazzName, String bizId) {
@@ -166,36 +164,58 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	@Override
 	public void triggerTccConfirmOrCancel(String tccTransBizId, String transTypeEnumClazz) {
-		logger.debug("Triggering TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] to confirm or cancel...");
-		String failureFlagKey = this.calcTccFailureFlagKey(transTypeEnumClazz, tccTransBizId);
-		if (redisTemplate.opsForValue().get(failureFlagKey) != null) {
+		String failureFlagListKey = this.calcTccFailureFlagListKey(transTypeEnumClazz, tccTransBizId);
+		Object failureStep = redisTemplate.opsForList().leftPop(failureFlagListKey);
+		if (failureStep != null) {
+			logger.info("TCC交易[" + transTypeEnumClazz + "#" + tccTransBizId + "]try阶段存在failure step，触发整个交易撤销！");
 			triggerTccCancel(tccTransBizId, transTypeEnumClazz);
 		} else {
 			triggerTccConfirm(tccTransBizId, transTypeEnumClazz);
 		}
-
 	}
 
 	private void triggerTccConfirm(String tccTransBizId, String transTypeEnumClazz) {
-		String confirmTimerKey = this.calcTccConfirmTimerKey(transTypeEnumClazz, tccTransBizId);
-		redisTemplate.opsForValue().set(confirmTimerKey, "", 1, TimeUnit.SECONDS);
+		logger.debug("Triggering TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] to confirm...");
 
-		logger.debug("设置timer[" + confirmTimerKey + "]过期");
-	}
+		List<EtfTccRecordStep> trStepList = queryTccRecordStepList(transTypeEnumClazz, tccTransBizId);
+		logger.debug(
+				"查找到需要confirm的TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] step" + trStepList.size() + "个");
+		for (EtfTccRecordStep step : trStepList) {
+			executor.submit(new Runnable() {
+				@Override
+				public void run() {
+					EtfTccRecordStep tr = loadTccTransRecordStep(transTypeEnumClazz, step.getTccEnumValue(),
+							tccTransBizId);
+					JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
 
-	private String calcTccConfirmTimerKey(String transTypeEnumClazz, String tccTransBizId) {
-		return ETF_TCC_KEYS.ETF_TCC_TIMER_CONFIRM + ":" + transTypeEnumClazz + "#" + tccTransBizId;
+					EtfTccAop.setTccCurrStageConfirm();
+					EtfTccAop.setTCC_CURR_BIZ_ID(tccTransBizId);
+					etfTccBeanUtil.invokeEtfBean(transTypeEnumClazz, step.getTccEnumValue(), paramJsonObj);
+				}
+			});
+		}
 	}
 
 	private void triggerTccCancel(String tccTransBizId, String transTypeEnumClazz) {
-		String cancelTimerKey = this.calcTccCancelTimerKey(transTypeEnumClazz, tccTransBizId);
-		redisTemplate.opsForValue().set(cancelTimerKey, "", 1, TimeUnit.SECONDS);
+		logger.debug("Triggering TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] to cancel...");
 
-		logger.debug("设置timer[" + cancelTimerKey + "]过期");
-	}
+		List<EtfTccRecordStep> trStepList = queryTccRecordStepList(transTypeEnumClazz, tccTransBizId);
+		logger.debug(
+				"查找到需要cancel的TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] step" + trStepList.size() + "个");
+		for (EtfTccRecordStep step : trStepList) {
+			executor.submit(new Runnable() {
+				@Override
+				public void run() {
+					EtfTccRecordStep tr = loadTccTransRecordStep(transTypeEnumClazz, step.getTccEnumValue(),
+							tccTransBizId);
+					JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
 
-	private String calcTccCancelTimerKey(String transTypeEnumClazz, String tccTransBizId) {
-		return ETF_TCC_KEYS.ETF_TCC_TIMER_CANCEL + ":" + transTypeEnumClazz + "#" + tccTransBizId;
+					EtfTccAop.setTccCurrStageCancel();
+					EtfTccAop.setTCC_CURR_BIZ_ID(tccTransBizId);
+					etfTccBeanUtil.invokeEtfBean(transTypeEnumClazz, step.getTccEnumValue(), paramJsonObj);
+				}
+			});
+		}
 	}
 
 	@Override
@@ -236,7 +256,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	@Override
 	public List<EtfTccRecordStep> queryTccRecordStepList(String transTypeEnumClazz, String bizId) {
-		String recordKeyPrefix = ETF_TCC_KEYS.ETF_TCC_RECORD + ":" + transTypeEnumClazz + "#" + bizId + "@*";
+		String recordKeyPrefix = ETF_TCC_KEYS.ETF_TCC_STEP + ":" + transTypeEnumClazz + "#" + bizId + "@*";
 		Set<String> keys = redisTemplate.keys(recordKeyPrefix);
 		return redisTemplate.opsForValue().multiGet(keys);
 	}

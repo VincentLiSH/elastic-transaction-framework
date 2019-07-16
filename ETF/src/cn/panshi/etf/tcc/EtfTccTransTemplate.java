@@ -32,7 +32,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 		if (stage == TCC_TRANS_STAGE.tcc_prepare) {
 			this.exeTccPrepare();
 		} else {
-			String bizId = EtfTccAop.getCurrBizId();
+			String bizId = EtfTccAop.getTCC_CURR_BIZ_ID();
 			//			EtfAbstractRedisLockTemplate etfLock = etfTccDao.getEtfTccConcurrentLock(600);
 
 			boolean lockSuccess = true;// etfLock.lock();
@@ -98,9 +98,9 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 	}
 
 	private void exeTccTry() {
-		String tccTransBizId = EtfTccAop.getCurrBizId();
-		String transTypeEnumClazz = EtfTccAop.getCurrTccTransEnumClazzName();
-		String transTypeEnumValue = EtfTccAop.getCURR_INVOKE_TCC_ENUM_VALUE();
+		String tccTransBizId = EtfTccAop.getTCC_CURR_BIZ_ID();
+		String transTypeEnumClazz = EtfTccAop.getTCC_CURR_TRANS_ENUM_CLAZZ_NAME();
+		String transTypeEnumValue = EtfTccAop.getTCC_CURR_ENUM_VALUE();
 		try {
 			tccTry();
 
