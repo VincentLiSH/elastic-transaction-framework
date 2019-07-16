@@ -38,9 +38,14 @@ public class TccDemoTransStarterTest {
 
 	@Test
 	public void testStartFlow1() throws Exception {
-		tccDemoStarterComponent.startTccFlow1();
+		try {
+			tccDemoStarterComponent.startTccFlow1();
 
-		Thread.sleep(60 * 1000);
+			Thread.sleep(60 * 1000);
+		} catch (Exception e) {
+			logger.debug(e.getMessage(), e);
+			throw e;
+		}
 	}
 
 }

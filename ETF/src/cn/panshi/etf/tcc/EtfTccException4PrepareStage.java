@@ -5,7 +5,7 @@ public class EtfTccException4PrepareStage extends Exception {
 	String error;
 
 	public EtfTccException4PrepareStage(String error) {
-		super();
+		super(error);
 		this.error = error;
 	}
 

@@ -133,7 +133,6 @@ public class EtfDemoComponent {
 			@Override
 			protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {
 				logger.debug("一次重试完成，需要轮询交易结果:" + etfDemoVo.getCode());
-				;
 			}
 
 			@Override

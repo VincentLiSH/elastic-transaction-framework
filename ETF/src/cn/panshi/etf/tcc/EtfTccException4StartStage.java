@@ -5,7 +5,7 @@ public class EtfTccException4StartStage extends Exception {
 	String error;
 
 	public EtfTccException4StartStage(String error) {
-		super();
+		super(error);
 		this.error = error;
 	}
 

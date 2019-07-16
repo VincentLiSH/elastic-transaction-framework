@@ -10,7 +10,7 @@ import cn.panshi.etf.core.EtfException4LockConcurrent;
 
 @Component
 public class TccDemoTransComponent {
-	static Logger log = LoggerFactory.getLogger(TccDemoTransComponent.class);
+	static Logger logger = LoggerFactory.getLogger(TccDemoTransComponent.class);
 	@Resource
 	EtfTccDaoRedis etfTccDaoRedis;
 
@@ -26,22 +26,22 @@ public class TccDemoTransComponent {
 
 				@Override
 				protected void tccTry() {
-					System.out.println("step1 try..." + vo.getCode());
+					logger.debug("step1 try..." + vo.getCode());
 					throw new RuntimeException("step1 try 失败");
 				}
 
 				@Override
 				protected void tccConfirm() {
-					System.out.println("confirm1..." + vo.getCode());
+					logger.debug("confirm1..." + vo.getCode());
 				}
 
 				@Override
 				protected void tccCancel() {
-					System.out.println("cancel1..." + vo.getCode());
+					logger.debug("cancel1..." + vo.getCode());
 				}
-			}.executeEtfTcc();
+			}.executeWithinEtfTcc();
 		} catch (EtfException4LockConcurrent e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 	}
 
@@ -57,21 +57,21 @@ public class TccDemoTransComponent {
 
 				@Override
 				protected void tccTry() {
-					System.out.println("try2..." + vo.getCode());
+					logger.debug("try2..." + vo.getCode());
 				}
 
 				@Override
 				protected void tccConfirm() {
-					System.out.println("confirm2..." + vo.getCode());
+					logger.debug("confirm2..." + vo.getCode());
 				}
 
 				@Override
 				protected void tccCancel() {
-					System.out.println("cancel2..." + vo.getCode());
+					logger.debug("cancel2..." + vo.getCode());
 				}
-			}.executeEtfTcc();
+			}.executeWithinEtfTcc();
 		} catch (EtfException4LockConcurrent e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 	}
 

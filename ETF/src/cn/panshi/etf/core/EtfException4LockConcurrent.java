@@ -5,7 +5,7 @@ public class EtfException4LockConcurrent extends Exception {
 	String error;
 
 	public EtfException4LockConcurrent(String error) {
-		super();
+		super(error);
 		this.error = error;
 	}
 
