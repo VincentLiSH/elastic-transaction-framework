@@ -35,8 +35,7 @@ ETF相对于其它同类项目的特点/优势：
 
 套用一句很多framework常用的宣传语——ETF可以让开发人员把更多精力用在真正的业务开发上。
 
-## ETF关键设计考量
-### 两种交易类型
+## ETF两种交易类型
 虽然总是在说交易、交易系统，但是其实交易也分不同类型的；
 
 我将复杂交易系统中的交易分成两类：可恢复的交易和不可恢复的交易；
@@ -69,9 +68,9 @@ ETF相对于其它同类项目的特点/优势：
 * 不难看出，这是一个“不可恢复交易”型组件，因此ETF提供的是retry和query机制来确保交易（在暂时出错的情况下 也能尽量）执行成功。
 
 ``` java
-public enum EtfDemoEnum {
-	TX_simple, TX_need_retry, TX_need_trans_query_on_success, AndThen_Invoke_Another_ETF, TX_simple_Nested;
-}
+	public enum EtfDemoEnum {
+		TX_simple, TX_need_retry, TX_need_trans_query_on_success, AndThen_Invoke_Another_ETF, TX_simple_Nested;
+	}
 
         @EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "AndThen_Invoke_Another_ETF", //
 			queryMaxTimes = 5, queryFirstDelaySeconds = 8, queryIntervalSeconds = 60, //
@@ -219,3 +218,16 @@ public enum EtfDemoEnum {
 		}
 	}
 ``` 
+## ETF基于Redis实现多种交易最终一致性保证机制
+ETF的最关键特性，目前都是严重依赖Redis的一些特性实现的：
+* 交易日志
+
+* 交易并发控制
+
+* 交易幂等性/交易防重
+
+* 交易延迟重试
+
+* 交易延迟查询处理
+
+* TCC同步
