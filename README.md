@@ -105,8 +105,7 @@ public String doSometh_AndThen_Invoke_Another_ETF(EtfDemoVo etfDemoVo) throws Ex
                                                                                                                 
 		@Override                                                                                               
 		protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {                                 
-			logger.debug("一次重试完成，需要轮询交易结果:" + etfDemoVo.getCode());                                             
-			;                                                                                                   
+			logger.debug("一次重试完成，需要轮询交易结果:" + etfDemoVo.getCode());	                                             
 		}                                                                                                       
                                                                                                                 
 		@Override                                                                                               
@@ -183,18 +182,18 @@ public void tccStep1(TccDemoVo vo) {
                                                                         
 			@Override                                                   
 			protected void tccTry() {                                   
-				System.out.println("step1 try..." + vo.getCode());      
+				logger.debug("step1 try..." + vo.getCode());      
 				throw new RuntimeException("step1 try 失败");             
 			}                                                           
                                                                         
 			@Override                                                   
 			protected void tccConfirm() {                               
-				System.out.println("confirm1..." + vo.getCode());       
+				logger.debug("confirm1..." + vo.getCode());       
 			}                                                           
                                                                         
 			@Override                                                   
 			protected void tccCancel() {                                
-				System.out.println("cancel1..." + vo.getCode());        
+				logger.debug("cancel1..." + vo.getCode());        
 			}                                                           
 		}.executeEtfTcc();                                              
 	} catch (EtfException4LockConcurrent e) {                           
@@ -214,17 +213,17 @@ public void tccStep2(TccDemoVo vo) {
                                                                         
 			@Override                                                   
 			protected void tccTry() {                                   
-				System.out.println("try2..." + vo.getCode());           
+				logger.debug("try2..." + vo.getCode());           
 			}                                                           
                                                                         
 			@Override                                                   
 			protected void tccConfirm() {                               
-				System.out.println("confirm2..." + vo.getCode());       
+				logger.debug("confirm2..." + vo.getCode());       
 			}                                                           
                                                                         
 			@Override                                                   
 			protected void tccCancel() {                                
-				System.out.println("cancel2..." + vo.getCode());        
+				logger.debug("cancel2..." + vo.getCode());        
 			}                                                           
 		}.executeEtfTcc();                                              
 	} catch (EtfException4LockConcurrent e) {                           
