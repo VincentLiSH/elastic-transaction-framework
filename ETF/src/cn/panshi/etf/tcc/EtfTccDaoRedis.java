@@ -33,6 +33,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		ETF_TCC_STEP, //
 		ETF_TCC_COUNTOR_LIST_TRY, //try计数器，当最后一个try完成时返回null 于是触发所有交易confirm或cancel
 		ETF_TCC_COUNTOR_LIST_CONFIRM, //confirm计数器，当最后一个confirm完成时返回null 于是触发TCC完成
+		ETF_TCC_COUNTOR_LIST_CANCEL, //
 		ETF_TCC_FAILURE_FLAG_LIST;//整个TCC事务失败的标志位
 
 	}
@@ -63,19 +64,21 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	 * memo:初始化Tcc try计数器，以便TCC交易并发执行到最后一个try完成后 触发confirm或cancel
 	 */
 	@Override
-	public void initTccCounter4Try(String tccEnumClassName, String bizId) throws EtfTccException4PrepareStage {
+	public void initTccCounter4Try(String tccEnumClazzName, String bizId) throws EtfTccException4PrepareStage {
 		try {
-			Enum[] enumConstants = ((Class<Enum>) Class.forName(tccEnumClassName)).getEnumConstants();
-			logger.debug("初始化Tcc try计数器：" + (enumConstants.length - 1) + "，以便TCC交易并发执行到最后一个try完成后 触发confirm或cancel");
+			Enum[] enumConstants = ((Class<Enum>) Class.forName(tccEnumClazzName)).getEnumConstants();
+			logger.debug("初始化Tcc[" + tccEnumClazzName + "#" + bizId + "]try计数器：" + (enumConstants.length - 1)
+					+ "，以便TCC交易并发执行到最后一个try完成后 触发confirm或cancel");
 
-			String tccTryListKey = calcTccCountorList4TryKey(tccEnumClassName, bizId);
-			Long countorListSize = redisTemplate.opsForList().size(tccTryListKey);
+			String tccTryCounterKey = calcTccCountor4TryKey(tccEnumClazzName, bizId);
+			Long countorListSize = redisTemplate.opsForList().size(tccTryCounterKey);
 			if (countorListSize == null || countorListSize == 0L) {
 				for (int i = 0; i < enumConstants.length - 1; i++) {
-					redisTemplate.opsForList().leftPush(tccTryListKey, "" + (i + 1));
+					redisTemplate.opsForList().leftPush(tccTryCounterKey, "" + (i + 1));
 				}
+			} else {
+				logger.warn("重复初始化Tcc try计数器：" + tccEnumClazzName + "#" + bizId);
 			}
-
 		} catch (ClassNotFoundException e) {
 			logger.error(e.getMessage(), e);
 			throw new EtfTccException4PrepareStage(e.getMessage());
@@ -116,7 +119,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	@Override
 	public String popTccTransListOnTrySuccess(String currBizId, String currTccTransEnumClazzName) {
-		String tccTryListKey = calcTccCountorList4TryKey(currTccTransEnumClazzName, currBizId);
+		String tccTryListKey = calcTccCountor4TryKey(currTccTransEnumClazzName, currBizId);
 		Object popValue = redisTemplate.opsForList().rightPop(tccTryListKey);
 		return (String) popValue;
 	}
@@ -124,7 +127,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	@Override
 	public void popTccTransListAndFlagTccFailure(String tccTransBizId, String transTypeEnumClazz,
 			String transTypeEnumValue) {
-		String tccTryListKey = calcTccCountorList4TryKey(transTypeEnumClazz, tccTransBizId);
+		String tccTryListKey = calcTccCountor4TryKey(transTypeEnumClazz, tccTransBizId);
 		String tccFailureFlagListKey = this.calcTccFailureFlagListKey(transTypeEnumClazz, tccTransBizId);
 
 		//		redisTemplate.opsForValue().set(tccFailureFlagKey,
@@ -143,7 +146,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		return ETF_TCC_KEYS.ETF_TCC_FAILURE_FLAG_LIST + ":" + transTypeEnumClazz + ":#" + tccTransBizId;
 	}
 
-	protected String calcTccCountorList4TryKey(String tccTransEnumClazzName, String bizId) {
+	protected String calcTccCountor4TryKey(String tccTransEnumClazzName, String bizId) {
 		String tccTryListKey = ETF_TCC_KEYS.ETF_TCC_COUNTOR_LIST_TRY + ":" + tccTransEnumClazzName + ":#" + bizId;
 		return tccTryListKey;
 	}
@@ -166,6 +169,8 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		List<EtfTccStep> trStepList = queryTccRecordStepList(transTypeEnumClazz, tccTransBizId);
 		logger.debug(
 				"查找到需要confirm的TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] step" + trStepList.size() + "个");
+		this.initTccCounter4Confirm(transTypeEnumClazz, tccTransBizId, trStepList.size() - 1);
+
 		for (EtfTccStep step : trStepList) {
 			executor.submit(new Runnable() {
 				@Override
@@ -181,12 +186,32 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		}
 	}
 
+	private void initTccCounter4Confirm(String tccEnumClazzName, String tccTransBizId, int countorInitValue) {
+		logger.debug("初始化Tcc[" + tccEnumClazzName + "#" + tccTransBizId + "]confirm计数器：" + countorInitValue
+				+ "，以便TCC交易并发执行到最后一个confirm完成后 触发后续动作");
+
+		String tccConfirmCounterKey = calcTccCountor4ConfirmKey(tccEnumClazzName, tccTransBizId);
+		Long countorListSize = redisTemplate.opsForList().size(tccConfirmCounterKey);
+		if (countorListSize == null || countorListSize == 0L) {
+			for (int i = 0; i < countorInitValue; i++) {
+				redisTemplate.opsForList().leftPush(tccConfirmCounterKey, "" + (i + 1));
+			}
+		} else {
+			logger.warn("重复初始化Tcc confirm计数器：" + tccEnumClazzName + "#" + tccTransBizId);
+		}
+	}
+
+	private String calcTccCountor4ConfirmKey(String tccEnumClazzName, String bizId) {
+		return ETF_TCC_KEYS.ETF_TCC_COUNTOR_LIST_CONFIRM + ":" + tccEnumClazzName + ":#" + bizId;
+	}
+
 	private void triggerTccCancel(String tccTransBizId, String transTypeEnumClazz) {
 		logger.debug("Triggering TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] to cancel...");
 
 		List<EtfTccStep> trStepList = queryTccRecordStepList(transTypeEnumClazz, tccTransBizId);
 		logger.debug(
 				"查找到需要cancel的TCC[" + transTypeEnumClazz + "#" + tccTransBizId + "] step" + trStepList.size() + "个");
+		this.initTccCounter4Cancel(transTypeEnumClazz, tccTransBizId, trStepList.size() - 1);
 		for (EtfTccStep step : trStepList) {
 			executor.submit(new Runnable() {
 				@Override
@@ -200,6 +225,25 @@ public class EtfTccDaoRedis implements EtfTccDao {
 				}
 			});
 		}
+	}
+
+	private void initTccCounter4Cancel(String tccEnumClazzName, String tccTransBizId, int countorInitValue) {
+		logger.debug("初始化Tcc[" + tccEnumClazzName + "#" + tccTransBizId + "] confirm计数器：" + countorInitValue
+				+ "，以便TCC交易并发执行到最后一个cancel完成后 触发后续动作");
+
+		String tccConfirmCancelKey = calcTccCountor4CancelKey(tccEnumClazzName, tccTransBizId);
+		Long countorListSize = redisTemplate.opsForList().size(tccConfirmCancelKey);
+		if (countorListSize == null || countorListSize == 0L) {
+			for (int i = 0; i < countorInitValue; i++) {
+				redisTemplate.opsForList().leftPush(tccConfirmCancelKey, "" + (i + 1));
+			}
+		} else {
+			logger.warn("重复初始化Tcc cancel计数器：" + tccEnumClazzName + "#" + tccTransBizId);
+		}
+	}
+
+	private String calcTccCountor4CancelKey(String tccEnumClazzName, String bizId) {
+		return ETF_TCC_KEYS.ETF_TCC_COUNTOR_LIST_CANCEL + ":" + tccEnumClazzName + ":#" + bizId;
 	}
 
 	@Override
