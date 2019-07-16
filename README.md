@@ -218,6 +218,19 @@ ETF相对于其它同类项目的特点/优势：
 		}
 	}
 ``` 
+作为对比可以看下另一个星数很高的tcc项目，对业务组件的侵入性是什么样的:
+``` java
+@Compensable(confirmMethod = "confirmRecord", cancelMethod = "cancelRecord", transactionContextEditor = MethodTransactionContextEditor.class)
+public String record(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) ...
+
+public void confirmRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto)...
+public void cancelRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto)...
+
+```
+https://github.com/changmingxie/tcc-transaction/wiki/%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%971.2.x#%E5%9C%A8tcc-transaction-http-capital%E4%B8%AD%E5%8F%91%E5%B8%83tcc%E6%9C%8D%E5%8A%A1%E7%A4%BA%E4%BE%8B
+
+明确要求try方法、confirm方法和cancel方法入参类型须一样 https://github.com/changmingxie/tcc-transaction/wiki/%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%971.2.x#%E8%B0%83%E7%94%A8%E8%BF%9C%E7%A8%8Btcc%E6%9C%8D%E5%8A%A1-1
+
 ## ETF基于Redis实现多种交易最终一致性保证机制
 ETF的最关键特性，目前都是严重依赖Redis的一些特性实现的：
 * 交易日志
