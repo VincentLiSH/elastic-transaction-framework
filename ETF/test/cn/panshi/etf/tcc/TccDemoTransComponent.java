@@ -33,6 +33,7 @@ public class TccDemoTransComponent {
 				@Override
 				protected void tccConfirm() {
 					logger.debug("confirm1..." + vo.getCode());
+					throw new RuntimeException("step1 confirm 失败");
 				}
 
 				@Override

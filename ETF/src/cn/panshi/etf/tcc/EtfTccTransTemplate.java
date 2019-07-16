@@ -70,28 +70,36 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 	}
 
 	private void exeTccCancel() {
+		String tccTransBizId = EtfTccAop.getTCC_CURR_BIZ_ID();
+		String tccEnumClazzName = EtfTccAop.getTCC_CURR_TRANS_ENUM_CLAZZ_NAME();
 		try {
 			tccCancel();
-			String key = etfTccDao.popTccCancelListOnCancelFinished();
+
+			String key = etfTccDao.popTccCancelCountorListOnFinished(tccEnumClazzName, tccTransBizId);
 			if (key == null) {
 				logger.debug("popTccCancelListOnCancelFinished返回null，表明当前所有TCC交易都已经cancel完成，可以标记整个交易canceled");
-				etfTccDao.updateTccCanceled();
+				etfTccDao.updateTccCanceled(tccEnumClazzName, tccTransBizId);
 			}
 		} catch (Exception e) {
-			etfTccDao.updateTccCancelFailure();
+			logger.error("TCC[" + getCurrEtfTransExeKey() + "]cancel失败" + e.getMessage(), e);
+			etfTccDao.popTccCancelCountorAndFlagFailure(tccEnumClazzName, tccTransBizId, e);
 		}
 	}
 
 	private void exeTccConfirm() {
+		String tccTransBizId = EtfTccAop.getTCC_CURR_BIZ_ID();
+		String tccEnumClazzName = EtfTccAop.getTCC_CURR_TRANS_ENUM_CLAZZ_NAME();
 		try {
 			tccConfirm();
-			String key = etfTccDao.popTccConfirmListOnSuccess();
+
+			String key = etfTccDao.popTccConfirmCountorListOnSuccess(tccEnumClazzName, tccTransBizId);
 			if (key == null) {
 				logger.debug("popTccConfirmListOnSuccess返回null，表明当前所有TCC交易都已经confirm完成，可以标记整个交易success");
-				etfTccDao.updateTccSuccess();
+				etfTccDao.updateTccSuccess(tccEnumClazzName, tccTransBizId);
 			}
 		} catch (Exception e) {
-			etfTccDao.updateTccFailure();
+			logger.error("TCC[" + getCurrEtfTransExeKey() + "]confirm失败" + e.getMessage(), e);
+			etfTccDao.popTccConfirmCountorAndFlagFailure(tccEnumClazzName, tccTransBizId, e);
 		}
 	}
 
@@ -102,7 +110,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 		try {
 			tccTry();
 
-			String key = etfTccDao.popTccTransListOnTrySuccess(tccTransBizId, transTypeEnumClazz);
+			String key = etfTccDao.popTccTryCountorListOnSuccess(tccTransBizId, transTypeEnumClazz);
 			if (key == null) {
 				logger.debug("popTccTransListOnTrySuccess返回null，表明当前所有TCC交易都已经try完成，可以触发confirm");
 				etfTccDao.triggerTccConfirmOrCancel(tccTransBizId, transTypeEnumClazz);

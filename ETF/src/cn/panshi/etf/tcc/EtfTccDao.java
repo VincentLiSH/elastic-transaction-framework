@@ -9,23 +9,23 @@ public interface EtfTccDao {
 
 	EtfAbstractRedisLockTemplate getEtfTccConcurrentLock(int lockAutoExpireSeconds);
 
-	String popTccTransListOnTrySuccess(String tccTransBizId, String transTypeEnumClazz);
+	String popTccTryCountorListOnSuccess(String tccTransBizId, String transTypeEnumClazz);
 
 	void triggerTccConfirmOrCancel(String tccTransBizId, String transTypeEnumClazz);
 
 	void popTccTransListAndFlagTccFailure(String tccTransBizId, String transTypeEnumClazz, String transTypeEnumValue);
 
-	String popTccCancelListOnCancelFinished();
+	String popTccCancelCountorListOnFinished(String transTypeEnumClazz, String tccTransBizId);
 
-	void updateTccCanceled();
+	void updateTccCanceled(String tccEnumClazzName, String tccTransBizId);
 
-	void updateTccCancelFailure();
+	void popTccCancelCountorAndFlagFailure(String tccEnumClazzName, String tccTransBizId, Exception e);
 
-	String popTccConfirmListOnSuccess();
+	String popTccConfirmCountorListOnSuccess(String tccEnumClazzName, String tccTransBizId);
 
-	void updateTccSuccess();
+	void updateTccSuccess(String tccEnumClazzName, String tccTransBizId);
 
-	void updateTccFailure();
+	void popTccConfirmCountorAndFlagFailure(String tccEnumClazzName, String tccTransBizId, Exception e);
 
 	void saveEtfTccStep(String tccEnumClassName, String bizId, String tccEnumValue, String bizStateJson);
 
