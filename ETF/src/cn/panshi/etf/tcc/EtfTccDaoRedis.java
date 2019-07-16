@@ -30,7 +30,6 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	public enum ETF_TCC_KEYS {
 		ETF_TCC_LOCK, //
-		ETF_TCC_PREPARE_SET, //
 		ETF_TCC_STEP, //
 		ETF_TCC_COUNTOR_LIST_TRY, //try计数器，当最后一个try完成时返回null 于是触发所有交易confirm或cancel
 		ETF_TCC_COUNTOR_LIST_CONFIRM, //confirm计数器，当最后一个confirm完成时返回null 于是触发TCC完成
@@ -50,7 +49,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	}
 
 	@Override
-	public void saveEtfTccRecordStep(String tccEnumClassName, String bizId, String tccEnumValue, String bizStateJson) {
+	public void saveEtfTccStep(String tccEnumClassName, String bizId, String tccEnumValue, String bizStateJson) {
 		EtfTccStep step = new EtfTccStep();
 		step.setCrtDate(new Date());
 		step.setTccEnumValue(tccEnumValue);
@@ -60,30 +59,11 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		redisTemplate.opsForValue().set(key, step);
 	}
 
-	@Override
-	public boolean addEtfTccTransPrepareList(String tccEnumClassName, String bizId, String tccEnumValue)
-			throws EtfTccException4PrepareStage {
-		String tccPrepareListKey = calcTccPrepareSetKey(tccEnumClassName, bizId);
-		boolean checkExist = redisTemplate.opsForSet().isMember(tccPrepareListKey, tccEnumValue);
-		if (checkExist) {
-			return false;
-		} else {
-			Long added = redisTemplate.opsForSet().add(tccPrepareListKey, tccEnumValue);
-			logger.debug("add tcc prepare set success,return " + added);
-
-			this.initTccCounter4Try(tccEnumClassName, bizId);
-			return true;
-		}
-	}
-
-	protected String calcTccPrepareSetKey(String tccEnumClassName, String bizId) {
-		return ETF_TCC_KEYS.ETF_TCC_PREPARE_SET + ":" + tccEnumClassName + ":#" + bizId;
-	}
-
 	/**
 	 * memo:初始化Tcc try计数器，以便TCC交易并发执行到最后一个try完成后 触发confirm或cancel
 	 */
-	private void initTccCounter4Try(String tccEnumClassName, String bizId) throws EtfTccException4PrepareStage {
+	@Override
+	public void initTccCounter4Try(String tccEnumClassName, String bizId) throws EtfTccException4PrepareStage {
 		try {
 			Enum[] enumConstants = ((Class<Enum>) Class.forName(tccEnumClassName)).getEnumConstants();
 			logger.debug("初始化Tcc try计数器：" + (enumConstants.length - 1) + "，以便TCC交易并发执行到最后一个try完成后 触发confirm或cancel");
@@ -100,11 +80,6 @@ public class EtfTccDaoRedis implements EtfTccDao {
 			logger.error(e.getMessage(), e);
 			throw new EtfTccException4PrepareStage(e.getMessage());
 		}
-	}
-
-	@Override
-	public Set<String> findTccTransList2Start(String tccEnumClassName, String bizId) {
-		return redisTemplate.opsForSet().members(calcTccPrepareSetKey(tccEnumClassName, bizId));
 	}
 
 	@Override
@@ -264,7 +239,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	}
 
 	private List<EtfTccStep> queryTccRecordStepList(String transTypeEnumClazz, String bizId) {
-		String recordKeyPrefix = ETF_TCC_KEYS.ETF_TCC_STEP + ":" + transTypeEnumClazz + "#" + bizId + "@*";
+		String recordKeyPrefix = ETF_TCC_KEYS.ETF_TCC_STEP + ":" + transTypeEnumClazz + ":#" + bizId + ":@*";
 		Set<String> keys = redisTemplate.keys(recordKeyPrefix);
 		return redisTemplate.opsForValue().multiGet(keys);
 	}

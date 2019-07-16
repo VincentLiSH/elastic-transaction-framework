@@ -1,16 +1,9 @@
 package cn.panshi.etf.tcc;
 
-import java.util.Set;
-
 import cn.panshi.etf.core.EtfAbstractRedisLockTemplate;
 
 public interface EtfTccDao {
 	EtfTccStep loadTccTransRecordStep(String transTypeEnumClazz, String transType, String bizId);
-
-	boolean addEtfTccTransPrepareList(String name, String bizId, String tccEnumValue)
-			throws EtfTccException4PrepareStage;
-
-	Set<String> findTccTransList2Start(String name, String tccTransBizId);
 
 	void startTccTransAsynch(String tccTransClass, String tccTransEnumValue, String tccTransBizId);
 
@@ -34,6 +27,8 @@ public interface EtfTccDao {
 
 	void updateTccFailure();
 
-	void saveEtfTccRecordStep(String tccEnumClassName, String bizId, String tccEnumValue, String bizStateJson);
+	void saveEtfTccStep(String tccEnumClassName, String bizId, String tccEnumValue, String bizStateJson);
+
+	void initTccCounter4Try(String tccEnumClassName, String bizId) throws EtfTccException4PrepareStage;
 
 }

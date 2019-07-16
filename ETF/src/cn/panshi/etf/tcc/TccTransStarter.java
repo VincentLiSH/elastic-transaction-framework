@@ -1,5 +1,6 @@
 package cn.panshi.etf.tcc;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +24,8 @@ public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum
 	private String tccTransBizId = null;
 
 	Class<? extends Enum<T_tcc_trans_enum_type>> tccTransEnumClass;
+
+	Set<String> tccTransStepSet = new HashSet<>();
 
 	public TccTransStarter(EtfTccDao etfTccDao) {
 		super();
@@ -76,14 +79,19 @@ public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum
 							+ "]准备阶段返回bizId业务流水号" + bizId + "与前面交易准备返回的[" + tccTransBizId + "]不一致，请确保正确实现了TCC交易回调！");
 				}
 			}
-			boolean success = etfTccDao.addEtfTccTransPrepareList(tccEnumType.getName(), bizId, tccEnumValue);
-			if (!success) {
+
+			if (tccTransStepSet.contains(tccEnumValue)) {
 				throw new EtfTccException4PrepareStage("TCC交易[" + tccEnumType.getName() + "." + tccEnumValue
 						+ "]准备失败，请确保TCC交易API正确配置了@EtfTcc，不存在重复类型！");
+			} else {
+				tccTransStepSet.add(tccEnumValue);
+				if (tccTransStepSet.size() == 1) {
+					etfTccDao.initTccCounter4Try(tccEnumType.getName(), bizId);
+				}
 			}
 
 			JSONObject inputParam = TCC_CURR_INPUT_PARAM.get();
-			etfTccDao.saveEtfTccRecordStep(tccEnumType.getName(), bizId, tccEnumValue,
+			etfTccDao.saveEtfTccStep(tccEnumType.getName(), bizId, tccEnumValue,
 					inputParam == null ? null : inputParam.toJSONString());
 
 			logger.debug("TCC交易[" + tccEnumType.getName() + "." + tccEnumValue + "]准备成功");
@@ -103,16 +111,21 @@ public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum
 		return null;
 	}
 
+	/**
+	 * memo:并发异步执行前面prepareTccTrans准备的所有TCC交易
+	 */
 	public final void startTccTransList() throws EtfTccException4StartStage {
-		Set<String> tccTransKeyList = etfTccDao.findTccTransList2Start(tccTransEnumClass.getName(), tccTransBizId);
+		if (tccTransEnumClass == null) {
+			throw new EtfTccException4StartStage("TCC交易无法启动，请检查交易准备逻辑！");
+		}
 		Enum[] enumConstants = tccTransEnumClass.getEnumConstants();
-		if (enumConstants.length != tccTransKeyList.size()) {
-			throw new EtfTccException4StartStage("TCC交易个数[" + tccTransKeyList.size() + "]与"
+		if (enumConstants.length != tccTransStepSet.size()) {
+			throw new EtfTccException4StartStage("TCC交易个数[" + tccTransStepSet.size() + "]与"
 					+ tccTransEnumClass.getName() + "定义[" + enumConstants.length + "]不一致！");
 		}
 
-		for (String tccTransEnumValue : tccTransKeyList) {
-			etfTccDao.startTccTransAsynch(tccTransEnumClass.getName(), tccTransEnumValue, tccTransBizId);
+		for (Enum tccTransEnum : enumConstants) {
+			etfTccDao.startTccTransAsynch(tccTransEnumClass.getName(), tccTransEnum.name(), tccTransBizId);
 		}
 	}
 
