@@ -92,7 +92,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 				EtfTccAop.setTccCurrStageTry();
 				EtfTccAop.setTCC_CURR_BIZ_ID(tccTransBizId);
-				etfTccBeanUtil.invokeEtfBean(transTypeEnumClazz, tccTransEnumValue, paramJsonObj);
+				etfTccBeanUtil.invokeTccBean(transTypeEnumClazz, tccTransEnumValue, paramJsonObj);
 			}
 		});
 
@@ -175,7 +175,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 					EtfTccAop.setTccCurrStageConfirm();
 					EtfTccAop.setTCC_CURR_BIZ_ID(tccTransBizId);
-					etfTccBeanUtil.invokeEtfBean(transTypeEnumClazz, step.getTccEnumValue(), paramJsonObj);
+					etfTccBeanUtil.invokeTccBean(transTypeEnumClazz, step.getTccEnumValue(), paramJsonObj);
 				}
 			});
 		}
@@ -196,7 +196,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 					EtfTccAop.setTccCurrStageCancel();
 					EtfTccAop.setTCC_CURR_BIZ_ID(tccTransBizId);
-					etfTccBeanUtil.invokeEtfBean(transTypeEnumClazz, step.getTccEnumValue(), paramJsonObj);
+					etfTccBeanUtil.invokeTccBean(transTypeEnumClazz, step.getTccEnumValue(), paramJsonObj);
 				}
 			});
 		}

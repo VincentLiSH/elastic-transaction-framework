@@ -27,7 +27,7 @@ public class TccDemoTransComponent {
 				@Override
 				protected void tccTry() {
 					logger.debug("step1 try..." + vo.getCode());
-					throw new RuntimeException("step1 try 失败");
+					//					throw new RuntimeException("step1 try 失败");
 				}
 
 				@Override

@@ -19,8 +19,8 @@ import com.alibaba.fastjson.JSONObject;
 public class EtfTccBeanUtil implements BeanPostProcessor {
 	static Logger logger = Logger.getLogger(EtfTccBeanUtil.class);
 
-	Map<String, Object> etfTransBeanMap = new HashMap<>();
-	Map<String, Method> etpTransBeanMethodMap = new HashMap<>();
+	Map<String, Object> tccTransBeanMap = new HashMap<>();
+	Map<String, Method> tccTransBeanMethodMap = new HashMap<>();
 
 	@Override
 	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
@@ -45,13 +45,13 @@ public class EtfTccBeanUtil implements BeanPostProcessor {
 				}
 
 				String key = ann.transEnumClazz().getName() + "." + ann.transEnumValue();
-				if (etfTransBeanMap.get(key) != null && firstTimeCheckTheMethod) {
-					throw new RuntimeException("TCC api[" + key + "]被重复定义了:[" + beanName + "." + method.getName()
-							+ "]和[" + etfTransBeanMap.get(key).getClass().getName() + "."
-							+ etpTransBeanMethodMap.get(key).getName() + "]");
+				if (tccTransBeanMap.get(key) != null && firstTimeCheckTheMethod) {
+					throw new RuntimeException("TCC API[" + key + "]被重复定义了:[" + beanName + "." + method.getName()
+							+ "]和[" + tccTransBeanMap.get(key).getClass().getName() + "."
+							+ tccTransBeanMethodMap.get(key).getName() + "]");
 				}
-				etfTransBeanMap.put(key, bean);
-				etpTransBeanMethodMap.put(key, method);
+				tccTransBeanMap.put(key, bean);
+				tccTransBeanMethodMap.put(key, method);
 			}
 		}
 		return bean;
@@ -59,10 +59,10 @@ public class EtfTccBeanUtil implements BeanPostProcessor {
 
 	private static final LocalVariableTableParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
-	public void invokeEtfBean(String tccEnumClazz, String tccTransType, JSONObject paramJsonObj) {
+	public void invokeTccBean(String tccEnumClazz, String tccTransType, JSONObject paramJsonObj) {
 		String key = tccEnumClazz + "." + tccTransType;
-		Object target = etfTransBeanMap.get(key);
-		Method method = etpTransBeanMethodMap.get(key);
+		Object target = tccTransBeanMap.get(key);
+		Method method = tccTransBeanMethodMap.get(key);
 
 		Parameter[] methodParamArray = method.getParameters();
 
@@ -76,6 +76,6 @@ public class EtfTccBeanUtil implements BeanPostProcessor {
 					methodParam.getType());
 		}
 		Object object = ReflectionUtils.invokeMethod(method, target, argArry2InvokeTarget);
-		logger.debug("ReflectionUtils.invokeMethod return" + object);
+		System.out.println("无需输出此日志到logger，仅开发调试用。" + EtfTccBeanUtil.class.getName() + ".invokeMethod return" + object);
 	}
 }
