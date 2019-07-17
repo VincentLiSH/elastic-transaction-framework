@@ -109,7 +109,7 @@
 
 	<target name="test" depends="compile" description="运行所有单元测试">
 		<mkdir dir="build/test" />
-		<javac encoding="utf-8" srcdir="test" destdir="build/test" debug="${build.debug}" includeantruntime="false">
+		<javac target="1.8" source="1.8" encoding="utf-8" srcdir="test" destdir="build/test" debug="${build.debug}" includeantruntime="false">
 			<compilerarg value="-Xlint:unchecked" />
 			<classpath>
 				<pathelement path="${classes.dir}" />
