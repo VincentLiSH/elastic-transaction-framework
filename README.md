@@ -74,8 +74,8 @@ TCC可撤销交易仅适用于组织内部统一架构实施，对于外部系�
 * 通过enum枚举类型定义和声明这些交易；简单的可以一个enum，复杂的可以为每个流程定义一个enum；enum的每个值对应一个交易；
 * 此时其实就需要想清楚交易的类型了：可撤销 or 不可撤销；Robust还是Tcc？
 * 为每个交易定义一个Tx组件：
-** 不可撤销型交易：在API标记@EtfRobustTx、配置交易enum和重试规则等；基于模板工具类EtfRobustTemplateRedis填充交易的正常业务逻辑和重试、查询、回调逻辑；
-** 可撤销交易：在API标记@EtfTccTx并配置交易enum；基于模板工具类TccTemplate实现try、confirm、cancel逻辑；
+* --不可撤销型交易：在API标记@EtfRobustTx、配置交易enum和重试规则等；基于模板工具类EtfRobustTemplateRedis填充交易的正常业务逻辑和重试、查询、回调逻辑；
+* --可撤销交易：在API标记@EtfTccTx并配置交易enum；基于模板工具类TccTemplate实现try、confirm、cancel逻辑；
 更多细节可参照ETF中的junit测试代码，后续也会提供开发指南文档。
 
 ## ETF框架的低侵入性编程模型
