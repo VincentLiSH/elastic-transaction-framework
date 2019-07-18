@@ -14,7 +14,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import cn.panshi.etf.robust.EtfDaoRedis.ETF_REDIS_KEYS;
+import cn.panshi.etf.robust.EtfRobDaoRedis.ETF_REDIS_KEYS;
 import cn.panshi.etf.robust.demo.EtfDemoComponent;
 import cn.panshi.etf.robust.demo.EtfDemoEnum;
 import cn.panshi.etf.robust.demo.EtfDemoVo;
@@ -23,12 +23,12 @@ import cn.panshi.etf.robust.demo.EtfDemoVo;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:spring-test*.xml" })
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class EtfTemplateTest {
+public class EtfRobustTemplateTest {
 	Logger logger = Logger.getLogger(EtfDemoComponent.class);
 	@Resource
 	EtfDemoComponent etfDemoComponent;
 	@Resource
-	EtfDaoRedis etfDaoRedis;
+	EtfRobDaoRedis etfRobDaoRedis;
 	@Resource
 	RedisTemplate redisTemplate;
 
@@ -59,14 +59,14 @@ public class EtfTemplateTest {
 		} catch (Exception e) {
 			Thread.sleep(2 * 1000);
 
-			Set<String> retryList = etfDaoRedis.listFailureRetryQueue();
+			Set<String> retryList = etfRobDaoRedis.listFailureRetryQueue();
 			logger.debug("重试未执行前 队列size应该为1:[" + retryList.size() + "]");
 			Assert.assertEquals(1, retryList.size());
 
 			Thread.sleep(8 * 1000);//sleep 10秒钟 等待etf框架自动重试
 		}
 
-		EtfTransRecord tr = etfDaoRedis.loadEtfTransRecord(EtfDemoEnum.class.getName(),
+		EtfRobTxRecord tr = etfRobDaoRedis.loadEtfTransRecord(EtfDemoEnum.class.getName(),
 				EtfDemoEnum.TX_need_retry.name(), vo.getCode());
 		logger.debug("10秒后交易重试应该成功，交易结果:[" + tr.getTransResultJson() + "]");
 		Assert.assertEquals("\"return bizId-testDoSometh_NeedRetry\"", tr.getTransResultJson());
@@ -74,7 +74,7 @@ public class EtfTemplateTest {
 		logger.debug("10秒后交易重试应该成功，交易成功flag:[" + tr.getTransSuccess() + "]");
 		Assert.assertTrue(tr.getTransSuccess());
 
-		Set<String> retryList = etfDaoRedis.listFailureRetryQueue();
+		Set<String> retryList = etfRobDaoRedis.listFailureRetryQueue();
 		logger.debug("重试后 队列size应该为0:[" + retryList.size() + "]");
 		Assert.assertEquals(0, retryList.size());
 	}
@@ -88,7 +88,7 @@ public class EtfTemplateTest {
 		vo.setCode("bizId");
 		etfDemoComponent.doSometh_Critical_NeedTransQueryOnSuccess(vo);
 
-		EtfTransRecord tr = etfDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
+		EtfRobTxRecord tr = etfRobDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
 
 		logger.debug("交易结果:[" + tr.getTransResultJson() + "]");
 		Assert.assertEquals("\"return bizId\"", tr.getTransResultJson());
@@ -103,7 +103,7 @@ public class EtfTemplateTest {
 
 		Thread.sleep(10 * 1000);//sleep 10秒钟 等待etf框架自动查询
 
-		tr = etfDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
+		tr = etfRobDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
 		logger.debug("查询完成后，etf交易getQueryTransSuccess应该为trur:[" + tr.getQueryTransSuccess() + "]");
 		Assert.assertTrue(tr.getQueryTransSuccess());
 
@@ -126,14 +126,14 @@ public class EtfTemplateTest {
 
 		Thread.sleep(10 * 1000);//sleep 10秒钟 等待etf框架自动回调next
 
-		EtfTransRecord tr1 = etfDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
+		EtfRobTxRecord tr1 = etfRobDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
 
 		logger.debug("父交易getTransSuccess应该为true:[" + tr1.getTransSuccess() + "]");
 		Assert.assertTrue(tr1.getTransSuccess());
 
 		Thread.sleep(20 * 1000);
 
-		EtfTransRecord trNested = etfDaoRedis.loadEtfTransRecord(transEnumClass, EtfDemoEnum.TX_simple_Nested.name(),
+		EtfRobTxRecord trNested = etfRobDaoRedis.loadEtfTransRecord(transEnumClass, EtfDemoEnum.TX_simple_Nested.name(),
 				vo.getCode());
 
 		logger.debug("子交易getTransSuccess应该为true:[" + trNested.getTransSuccess() + "]");
@@ -157,7 +157,7 @@ public class EtfTemplateTest {
 
 		Thread.sleep(20 * 1000);//sleep 10秒钟 等待etf重试4次 每次间隔2秒（redis误差一般2~3秒）
 
-		EtfTransRecord tr1 = etfDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
+		EtfRobTxRecord tr1 = etfRobDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
 
 		Assert.assertFalse(tr1.getTransSuccess());
 
@@ -166,7 +166,7 @@ public class EtfTemplateTest {
 		String trKey = (String) redisTemplate.opsForList()
 				.index(ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST.name(), 0);
 		Assert.assertEquals(
-				etfDaoRedis.calcEtfTransRecordKey(tr1.transTypeEnumClazz, tr1.getTransType(), tr1.getBizId()), trKey);
+				etfRobDaoRedis.calcEtfTransRecordKey(tr1.transTypeEnumClazz, tr1.getTransType(), tr1.getBizId()), trKey);
 
 	}
 }

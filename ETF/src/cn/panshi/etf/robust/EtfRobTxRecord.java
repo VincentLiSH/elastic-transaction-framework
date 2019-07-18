@@ -10,7 +10,7 @@ import java.util.List;
  * transTypeEnumClazz、transType、bizId三要素是逻辑主键——联合唯一索引
  */
 @SuppressWarnings("serial")
-public class EtfTransRecord implements Serializable {
+public class EtfRobTxRecord implements Serializable {
 	String transTypeEnumClazz;
 
 	String transType;
@@ -39,7 +39,7 @@ public class EtfTransRecord implements Serializable {
 
 	Boolean queryTransSuccess;
 
-	List<EtfTransExeLog> logList = new ArrayList<>();
+	List<EtfRobTxRecordLog> logList = new ArrayList<>();
 
 	public String getTransTypeEnumClazz() {
 		return transTypeEnumClazz;
@@ -145,11 +145,11 @@ public class EtfTransRecord implements Serializable {
 		this.transResultJson = transResultJson;
 	}
 
-	public List<EtfTransExeLog> getLogList() {
+	public List<EtfRobTxRecordLog> getLogList() {
 		return logList;
 	}
 
-	public void setLogList(List<EtfTransExeLog> logList) {
+	public void setLogList(List<EtfRobTxRecordLog> logList) {
 		this.logList = logList;
 	}
 
