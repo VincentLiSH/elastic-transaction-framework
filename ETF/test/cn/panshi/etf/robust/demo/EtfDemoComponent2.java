@@ -5,23 +5,23 @@ import javax.annotation.Resource;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
-import cn.panshi.etf.robust.EtfAnnTransApi;
-import cn.panshi.etf.robust.EtfDaoRedis;
-import cn.panshi.etf.robust.EtfException4TransNeedRetry;
-import cn.panshi.etf.robust.EtfTemplateWithRedisDao;
+import cn.panshi.etf.robust.EtfRobustTx;
+import cn.panshi.etf.robust.EtfRobDaoRedis;
+import cn.panshi.etf.robust.EtfRobErr4TransNeedRetry;
+import cn.panshi.etf.robust.EtfRobustTemplateRedis;
 
 @Component
 public class EtfDemoComponent2 {
 	Logger logger = Logger.getLogger(EtfDemoComponent2.class);
 	@Resource
-	EtfDaoRedis etfDaoRedis;
+	EtfRobDaoRedis etfRobDaoRedis;
 
-	@EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "TX_simple_Nested", //
+	@EtfRobustTx(transEnumClazz = EtfDemoEnum.class, transEnumValue = "TX_simple_Nested", //
 			retryMaxTimes = 3, retryFirstDelaySeconds = 5, retryIntervalSeconds = 10)
 	public String doSometh_Simple_By_Another_Etf(EtfDemoVo2 etfDemoVo) throws Exception {
 
-		EtfTemplateWithRedisDao<EtfDemoEnum, String> etfTemplate = new EtfTemplateWithRedisDao<EtfDemoEnum, String>(
-				etfDaoRedis) {
+		EtfRobustTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTemplateRedis<EtfDemoEnum, String>(
+				etfRobDaoRedis) {
 
 			@Override
 			protected String calcEtfBizId() {
@@ -29,9 +29,9 @@ public class EtfDemoComponent2 {
 			}
 
 			@Override
-			protected void doBizWithinEtf() throws EtfException4TransNeedRetry {
+			protected void doBizWithinEtf() throws EtfRobErr4TransNeedRetry {
 				logger.debug("这是个被另一ETF组件调用的ETF交易（需要重试2次）:" + etfDemoVo.getCode());
-				throw new EtfException4TransNeedRetry("test 重试");
+				throw new EtfRobErr4TransNeedRetry("test 重试");
 			}
 
 			@Override

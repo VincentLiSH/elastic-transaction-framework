@@ -19,13 +19,13 @@ import org.springframework.util.ReflectionUtils;
 
 import com.alibaba.fastjson.JSONObject;
 
-import cn.panshi.etf.robust.EtfDaoRedis.ETF_REDIS_KEYS;
+import cn.panshi.etf.robust.EtfRobDaoRedis.ETF_ROB_REDIS_KEYS;
 
 @Component
-public class EtfTransBeanUtil implements BeanPostProcessor {
-	static Logger log = LoggerFactory.getLogger(EtfTransBeanUtil.class);
+public class EtfRobBeanUtil implements BeanPostProcessor {
+	static Logger log = LoggerFactory.getLogger(EtfRobBeanUtil.class);
 	@Resource
-	EtfDao etfDao;
+	EtfRobDao etfRobDao;
 
 	Map<String, Object> etfTransBeanMap = new HashMap<>();
 
@@ -42,7 +42,7 @@ public class EtfTransBeanUtil implements BeanPostProcessor {
 		Method[] methods = ReflectionUtils.getAllDeclaredMethods(bean.getClass());
 		if (methods != null) {
 			for (Method method : methods) {
-				EtfAnnTransApi ann = AnnotationUtils.findAnnotation(method, EtfAnnTransApi.class);
+				EtfRobustTx ann = AnnotationUtils.findAnnotation(method, EtfRobustTx.class);
 				if (ann == null) {
 					continue;
 				}
@@ -95,15 +95,15 @@ public class EtfTransBeanUtil implements BeanPostProcessor {
 
 		String transType = expireKey.substring(expireKey.indexOf("@") + 1, expireKey.indexOf("#"));
 
-		EtfTransRecord tr = etfDao.loadEtfTransRecord(transTypeEnumClazz, transType, bizId);
+		EtfRobTxRecord tr = etfRobDao.loadEtfTransRecord(transTypeEnumClazz, transType, bizId);
 		JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
-		EtfAop.setCurrEtfBizId(bizId);
+		EtfRobAop.setCurrEtfBizId(bizId);
 
-		if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_TIMER.name())) {
-			EtfAop.setCurrEtfTransRetryTimerKey(expireKey);
+		if (StringUtils.startsWith(expireKey, ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_TIMER.name())) {
+			EtfRobAop.setCurrEtfTransRetryTimerKey(expireKey);
 			invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
-		} else if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_TIMER.name())) {
-			EtfAop.setCurrEtfTransQueryTimerKey(expireKey);
+		} else if (StringUtils.startsWith(expireKey, ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_TIMER.name())) {
+			EtfRobAop.setCurrEtfTransQueryTimerKey(expireKey);
 			invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
 		} else {
 

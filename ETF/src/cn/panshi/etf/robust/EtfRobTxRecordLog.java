@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 @SuppressWarnings("serial")
-public class EtfTransExeLog implements Serializable {
+public class EtfRobTxRecordLog implements Serializable {
 	public enum TRANS_EXE_MODE {
 		normal, retry, after_success, duplicate;
 	}

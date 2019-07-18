@@ -12,8 +12,8 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
-import cn.panshi.etf.robust.EtfTransBeanUtil;
-import cn.panshi.etf.robust.EtfDaoRedis.ETF_REDIS_KEYS;
+import cn.panshi.etf.robust.EtfRobBeanUtil;
+import cn.panshi.etf.robust.EtfRobDaoRedis.ETF_ROB_REDIS_KEYS;
 import cn.panshi.etf.tcc.EtfTccBeanUtil;
 import cn.panshi.etf.tcc.EtfTccDao;
 
@@ -23,7 +23,7 @@ public class EtfTccRedisExpireEventListener {
 	@Resource
 	EtfTccBeanUtil etfTccBeanUtil;
 	@Resource
-	EtfTransBeanUtil etfTransBeanUtil;
+	EtfRobBeanUtil etfRobBeanUtil;
 	@Resource
 	EtfTccDao etfTccDao;
 
@@ -47,14 +47,14 @@ public class EtfTccRedisExpireEventListener {
 				String expireKey = new String(body);
 
 				boolean matchingKey = false;
-				for (ETF_REDIS_KEYS key : ETF_REDIS_KEYS.values()) {
+				for (ETF_ROB_REDIS_KEYS key : ETF_ROB_REDIS_KEYS.values()) {
 					if (StringUtils.startsWith(expireKey, key.name())) {
 						matchingKey = true;
 					}
 				}
 				if (matchingKey) {
 					logger.debug(String.format("redis queue: %s, body: %s", new String(channel), expireKey));
-					etfTransBeanUtil.processEtfTimerExpire(expireKey);
+					etfRobBeanUtil.processEtfTimerExpire(expireKey);
 					return;
 				}
 			} catch (Exception e) {

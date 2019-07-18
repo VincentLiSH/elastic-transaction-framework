@@ -18,16 +18,16 @@ import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.stereotype.Component;
 
 import cn.panshi.etf.robust.EtfAbstractRedisLockTemplate;
-import cn.panshi.etf.robust.EtfTransExeLog.TRANS_EXE_MODE;
+import cn.panshi.etf.robust.EtfRobTxRecordLog.TRANS_EXE_MODE;
 
 @Component
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class EtfDaoRedis implements EtfDao {
-	static Logger logger = LoggerFactory.getLogger(EtfDaoRedis.class);
+public class EtfRobDaoRedis implements EtfRobDao {
+	static Logger logger = LoggerFactory.getLogger(EtfRobDaoRedis.class);
 	@Resource
 	RedisTemplate redisTemplate;
 
-	public enum ETF_REDIS_KEYS {
+	public enum ETF_ROB_REDIS_KEYS {
 		/**
 		 * 
 		 */
@@ -75,27 +75,27 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	String calcEtfInvokeLockKey(String etfTransTypeEnumClass, String etfTransTypeEnumValue, String bizId) {
-		return ETF_REDIS_KEYS.ETF_ROBUST_LOCKER + ":" + etfTransTypeEnumClass + "@" + etfTransTypeEnumValue + "#"
+		return ETF_ROB_REDIS_KEYS.ETF_ROBUST_LOCKER + ":" + etfTransTypeEnumClass + "@" + etfTransTypeEnumValue + "#"
 				+ bizId;
 	}
 
 	@Override
-	public void validateTransDuplicate(EtfTransRecord tr) throws EtfException4TransDuplicate {
-		EtfTransRecord po = loadEtfTransRecord(tr);
+	public void validateTransDuplicate(EtfRobTxRecord tr) throws EtfRobErr4TransDuplicate {
+		EtfRobTxRecord po = loadEtfTransRecord(tr);
 		if (po != null) {
-			throw new EtfException4TransDuplicate(po);
+			throw new EtfRobErr4TransDuplicate(po);
 		}
 	}
 
 	@Override
-	public EtfTransRecord loadEtfTransRecord(String transTypeEnumClazz, String transType, String bizId) {
+	public EtfRobTxRecord loadEtfTransRecord(String transTypeEnumClazz, String transType, String bizId) {
 		String key = calcEtfTransRecordKey(transTypeEnumClazz, transType, bizId);
 
-		return (EtfTransRecord) redisTemplate.opsForValue().get(key);
+		return (EtfRobTxRecord) redisTemplate.opsForValue().get(key);
 	}
 
 	@Override
-	public String saveTransRecord(EtfTransRecord tr) {
+	public String saveTransRecord(EtfRobTxRecord tr) {
 		String key = calcEtfTransRecordKey(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
 
 		redisTemplate.opsForValue().set(key, tr);
@@ -111,13 +111,13 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	protected String calcEtfTransRecordKey(String transTypeEnumClazz, String transType, String bizId) {
-		return ETF_REDIS_KEYS.ETF_ROBUST_TRANS_RECORD + ":" + transTypeEnumClazz + "@" + transType + "#" + bizId;
+		return ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_RECORD + ":" + transTypeEnumClazz + "@" + transType + "#" + bizId;
 	}
 
 	@Override
-	public void updateTransRecordNextRetry(EtfTransRecord tr, Date nextRetryTime) {
+	public void updateTransRecordNextRetry(EtfRobTxRecord tr, Date nextRetryTime) {
 		tr.setNextRetryTime(nextRetryTime);
-		EtfTransRecord po = loadEtfTransRecord(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
+		EtfRobTxRecord po = loadEtfTransRecord(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
 		po.setRetryCount(tr.getRetryCount());
 		po.setNextRetryTime(nextRetryTime);
 
@@ -125,8 +125,8 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	@Override
-	public void updateTransRecordRetrySuccess(EtfTransRecord tr, String resultJson) {
-		EtfTransRecord po = loadEtfTransRecord(tr);
+	public void updateTransRecordRetrySuccess(EtfRobTxRecord tr, String resultJson) {
+		EtfRobTxRecord po = loadEtfTransRecord(tr);
 		po.setTransResultJson(resultJson);
 		po.setTransSuccess(true);
 		po.setRetryCount(tr.getRetryCount() == null ? 1 : tr.getRetryCount());
@@ -136,26 +136,26 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	@Override
-	public void updateTransMaxRetryTimesAndInsertFailureList(EtfTransRecord tr) {
-		EtfTransRecord po = loadEtfTransRecord(tr);
+	public void updateTransMaxRetryTimesAndInsertFailureList(EtfRobTxRecord tr) {
+		EtfRobTxRecord po = loadEtfTransRecord(tr);
 		po.setNextRetryTime(null);
 		po.setTransSuccess(false);
 		saveTransRecord(po);
 
 		String trKey = calcEtfTransRecordKey(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
-		redisTemplate.opsForList().leftPush(ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST.toString(), trKey);
-		logger.error(trKey + "达到最大重试次数，存入" + ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST + "等待后续处理！");
+		redisTemplate.opsForList().leftPush(ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST.toString(), trKey);
+		logger.error(trKey + "达到最大重试次数，存入" + ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST + "等待后续处理！");
 	}
 
 	/**
 	 * 事务操作 https://docs.spring.io/spring-data/redis/docs/1.7.1.RELEASE/reference/html/#tx
 	 */
 	@Override
-	public void insertEtfRetryQueueAndTimer(EtfTransRecord tr) {
+	public void insertEtfRetryQueueAndTimer(EtfRobTxRecord tr) {
 		String retryTime = new SimpleDateFormat("yyyyMMdd_HHmm").format(tr.getNextRetryTime());
-		String key4Timer = ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_TIMER + ":" + retryTime + ":"
+		String key4Timer = ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_TIMER + ":" + retryTime + ":"
 				+ tr.getTransTypeEnumClazz() + "@" + tr.getTransType() + "#" + tr.getBizId();
-		String key4Queue = ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_QUEUE + ":" + retryTime + ":"
+		String key4Queue = ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_QUEUE + ":" + retryTime + ":"
 				+ tr.getTransTypeEnumClazz() + "@" + tr.getTransType() + "#" + tr.getBizId();
 		List<Object> txResults = (List<Object>) redisTemplate.execute(new SessionCallback<List<Object>>() {
 			@Override
@@ -175,37 +175,37 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	@Override
-	public void addTrTransLog(EtfTransRecord tr, EtfTransExeLog etfLog) {
-		EtfTransRecord po = loadEtfTransRecord(tr);
+	public void addTrTransLog(EtfRobTxRecord tr, EtfRobTxRecordLog etfLog) {
+		EtfRobTxRecord po = loadEtfTransRecord(tr);
 		po.getLogList().add(etfLog);
 		saveTransRecord(po);
 	}
 
 	@Override
-	public void insertEtfQueryQueueAndTimer(EtfTransRecord tr) {
+	public void insertEtfQueryQueueAndTimer(EtfRobTxRecord tr) {
 		String queryTime = new SimpleDateFormat("yyyyMMdd_HHmm").format(tr.getNextQueryTime());
-		String key = ETF_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_TIMER + ":" + queryTime + ":" + tr.getTransTypeEnumClazz()
+		String key = ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_TIMER + ":" + queryTime + ":" + tr.getTransTypeEnumClazz()
 				+ "@" + tr.getTransType() + "#" + tr.getBizId();
 		redisTemplate.opsForValue().set(key, "");
 		redisTemplate.expireAt(key, tr.getNextQueryTime());
 	}
 
 	@Override
-	public void updateTransMaxQueryTimesAndInsertFailureList(EtfTransRecord tr) {
-		EtfTransRecord po = loadEtfTransRecord(tr);
+	public void updateTransMaxQueryTimesAndInsertFailureList(EtfRobTxRecord tr) {
+		EtfRobTxRecord po = loadEtfTransRecord(tr);
 		po.setNextQueryTime(null);
 		po.setQueryTransSuccess(false);
 		saveTransRecord(po);
 
 		String trKey = calcEtfTransRecordKey(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
-		redisTemplate.opsForList().leftPush(ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_QUERY_MAX_TIMES_LIST.toString(), trKey);
-		logger.error(trKey + "达到最大交易查询次数，存入" + ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_QUERY_MAX_TIMES_LIST + "等待后续处理！");
+		redisTemplate.opsForList().leftPush(ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_QUERY_MAX_TIMES_LIST.toString(), trKey);
+		logger.error(trKey + "达到最大交易查询次数，存入" + ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_QUERY_MAX_TIMES_LIST + "等待后续处理！");
 	}
 
 	@Override
-	public void updateTransRecordNextQuery(EtfTransRecord tr, Date nextQueryTime) {
+	public void updateTransRecordNextQuery(EtfRobTxRecord tr, Date nextQueryTime) {
 		tr.setNextRetryTime(nextQueryTime);
-		EtfTransRecord po = loadEtfTransRecord(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
+		EtfRobTxRecord po = loadEtfTransRecord(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
 		po.setQueryCount(tr.getQueryCount());
 		po.setNextQueryTime(nextQueryTime);
 
@@ -213,8 +213,8 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	@Override
-	public void updateTransRecordQuerySuccess(EtfTransRecord tr) {
-		EtfTransRecord po = loadEtfTransRecord(tr);
+	public void updateTransRecordQuerySuccess(EtfRobTxRecord tr) {
+		EtfRobTxRecord po = loadEtfTransRecord(tr);
 		po.setQueryTransSuccess(true);
 		po.setQueryCount(tr.getQueryCount() == null ? 1 : tr.getQueryCount());
 		po.setNextQueryTime(null);
@@ -222,8 +222,8 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	@Override
-	public void updateTransRecordQueryFailure(EtfTransRecord tr) {
-		EtfTransRecord po = loadEtfTransRecord(tr);
+	public void updateTransRecordQueryFailure(EtfRobTxRecord tr) {
+		EtfRobTxRecord po = loadEtfTransRecord(tr);
 		po.setQueryTransSuccess(false);
 		po.setQueryCount(tr.getQueryCount() == null ? 1 : tr.getQueryCount());
 		po.setNextQueryTime(null);
@@ -231,40 +231,40 @@ public class EtfDaoRedis implements EtfDao {
 	}
 
 	@Override
-	public void addTransDuplicateInvokeLog(EtfTransRecord tr) {
-		EtfTransRecord po = loadEtfTransRecord(tr);
-		EtfTransExeLog etfLog = new EtfTransExeLog();
+	public void addTransDuplicateInvokeLog(EtfRobTxRecord tr) {
+		EtfRobTxRecord po = loadEtfTransRecord(tr);
+		EtfRobTxRecordLog etfLog = new EtfRobTxRecordLog();
 		etfLog.setCrtDate(new Date());
 		etfLog.setLogType(TRANS_EXE_MODE.duplicate);
-		etfLog.setError(EtfException4TransDuplicate.class.getName());
+		etfLog.setError(EtfRobErr4TransDuplicate.class.getName());
 		po.getLogList().add(etfLog);
 		saveTransRecord(po);
 	}
 
-	private EtfTransRecord loadEtfTransRecord(EtfTransRecord tr) {
-		EtfTransRecord po = loadEtfTransRecord(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
+	private EtfRobTxRecord loadEtfTransRecord(EtfRobTxRecord tr) {
+		EtfRobTxRecord po = loadEtfTransRecord(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
 		return po;
 	}
 
 	public Set<String> listFailureRetryQueue() {
-		return redisTemplate.keys(ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_QUEUE.name() + "*");
+		return redisTemplate.keys(ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_QUEUE.name() + "*");
 	}
 
 	@Override
 	public void deleteEtfRetryQueueByTimerKey(String currEtfTransRetryTimerKey) {
 		String keySurfix = currEtfTransRetryTimerKey
-				.substring(ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_TIMER.name().length());
+				.substring(ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_TIMER.name().length());
 
-		String retryQueueKey = ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_QUEUE + keySurfix;
+		String retryQueueKey = ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_QUEUE + keySurfix;
 		redisTemplate.delete(retryQueueKey);
 	}
 
 	@Override
 	public void deleteEtfQueryQueueByTimerKey(String currEtfTransQueryTimerKey) {
 		String keySurfix = currEtfTransQueryTimerKey
-				.substring(ETF_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_TIMER.name().length());
+				.substring(ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_TIMER.name().length());
 
-		String queryQueueKey = ETF_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_QUEUE + keySurfix;
+		String queryQueueKey = ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_QUEUE + keySurfix;
 		redisTemplate.delete(queryQueueKey);
 	}
 }

@@ -5,7 +5,7 @@ import java.lang.reflect.ParameterizedType;
 import org.apache.log4j.Logger;
 
 import cn.panshi.etf.robust.EtfAbstractRedisLockTemplate;
-import cn.panshi.etf.robust.EtfException4LockConcurrent;
+import cn.panshi.etf.robust.EtfRobErr4LockConcurrent;
 
 @SuppressWarnings("unchecked")
 public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_trans_enum>> {
@@ -25,7 +25,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 		tcc_prepare, tcc_try, tcc_confirm, tcc_cancel;
 	}
 
-	public final void executeWithinEtfTcc() throws EtfException4LockConcurrent {
+	public final void executeWithinEtfTcc() throws EtfRobErr4LockConcurrent {
 		TCC_TRANS_STAGE stage = calcCurrTccStage();
 
 		if (stage == TCC_TRANS_STAGE.tcc_prepare) {
@@ -40,7 +40,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 				if (!lockSuccess) {
 					String error = "TCC交易[" + getCurrEtfTransExeKey() + "]在" + stage + "阶段获取并发锁失败";
 					logger.warn(error);
-					throw new EtfException4LockConcurrent(error);
+					throw new EtfRobErr4LockConcurrent(error);
 				}
 
 				if (stage == TCC_TRANS_STAGE.tcc_try) {

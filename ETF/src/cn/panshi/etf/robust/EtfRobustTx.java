@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EtfAnnTransApi {
+public @interface EtfRobustTx {
 	@SuppressWarnings("rawtypes")
 	Class<? extends Enum> transEnumClazz();
 

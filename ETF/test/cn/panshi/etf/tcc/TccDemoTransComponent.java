@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import cn.panshi.etf.robust.EtfException4LockConcurrent;
+import cn.panshi.etf.robust.EtfRobErr4LockConcurrent;
 
 @Component
 public class TccDemoTransComponent {
@@ -41,7 +41,7 @@ public class TccDemoTransComponent {
 					logger.debug("cancel1..." + vo.getCode());
 				}
 			}.executeWithinEtfTcc();
-		} catch (EtfException4LockConcurrent e) {
+		} catch (EtfRobErr4LockConcurrent e) {
 			logger.error(e.getMessage());
 		}
 	}
@@ -71,7 +71,7 @@ public class TccDemoTransComponent {
 					logger.debug("cancel2..." + vo.getCode());
 				}
 			}.executeWithinEtfTcc();
-		} catch (EtfException4LockConcurrent e) {
+		} catch (EtfRobErr4LockConcurrent e) {
 			logger.error(e.getMessage());
 		}
 	}

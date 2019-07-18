@@ -16,12 +16,12 @@ import com.alibaba.fastjson.JSONObject;
  */
 @Component
 @Aspect
-public class EtfAop {
-	static Logger log = Logger.getLogger(EtfAop.class);
+public class EtfRobAop {
+	static Logger log = Logger.getLogger(EtfRobAop.class);
 
-	private final static ThreadLocal<EtfAnnTransApi> EXIST_ETF_INVOKING_CONTEXT = new ThreadLocal<>();
+	private final static ThreadLocal<EtfRobustTx> EXIST_ETF_INVOKING_CONTEXT = new ThreadLocal<>();
 
-	private final static ThreadLocal<EtfAnnTransApi> CURR_INVOK_API_ANN = new ThreadLocal<>();
+	private final static ThreadLocal<EtfRobustTx> CURR_INVOK_API_ANN = new ThreadLocal<>();
 
 	private final static ThreadLocal<String> CURR_INVOKE_BIZ_ID = new ThreadLocal<>();
 	/**
@@ -36,13 +36,13 @@ public class EtfAop {
 	@Autowired
 	private ThreadPoolTaskExecutor executor;
 
-	@Around("@annotation(cn.panshi.etf.robust.EtfAnnTransApi)")
+	@Around("@annotation(cn.panshi.etf.robust.EtfRobustTx)")
 	public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
 
-		EtfAnnTransApi exitingEtfContext = EXIST_ETF_INVOKING_CONTEXT.get();
+		EtfRobustTx exitingEtfContext = EXIST_ETF_INVOKING_CONTEXT.get();
 
 		if (exitingEtfContext != null) {
-			EtfAnnTransApi thisInvoke = calcMethodAnn(joinPoint);
+			EtfRobustTx thisInvoke = calcMethodAnn(joinPoint);
 			log.debug("已存在ETF调用上下文[" + exitingEtfContext.transEnumClazz().getName() + exitingEtfContext.transEnumValue()
 					+ "]，嵌套调用[" + thisInvoke.transEnumClazz().getName() + thisInvoke.transEnumValue() + "]开始异步执行。。。");
 			executor.submit(new Runnable() {
@@ -104,9 +104,9 @@ public class EtfAop {
 		return result;
 	}
 
-	private EtfAnnTransApi calcMethodAnn(ProceedingJoinPoint joinPoint) {
+	private EtfRobustTx calcMethodAnn(ProceedingJoinPoint joinPoint) {
 		MethodSignature sig = ((MethodSignature) joinPoint.getSignature());
-		EtfAnnTransApi etfAnn = sig.getMethod().getAnnotation(EtfAnnTransApi.class);
+		EtfRobustTx etfAnn = sig.getMethod().getAnnotation(EtfRobustTx.class);
 		return etfAnn;
 	}
 
@@ -122,7 +122,7 @@ public class EtfAop {
 		return json;
 	}
 
-	public static EtfAnnTransApi getCurrEtfApiAnn() {
+	public static EtfRobustTx getCurrEtfApiAnn() {
 		return CURR_INVOK_API_ANN.get();
 	}
 

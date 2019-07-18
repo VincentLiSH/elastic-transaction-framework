@@ -1,10 +1,10 @@
 package cn.panshi.etf.robust;
 
 @SuppressWarnings("serial")
-public class EtfException4InvalidTransType extends Exception {
+public class EtfRobErr4TransNeedRetry extends RuntimeException {
 	String error;
 
-	public EtfException4InvalidTransType(String error) {
+	public EtfRobErr4TransNeedRetry(String error) {
 		super(error);
 		this.error = error;
 	}
@@ -12,5 +12,4 @@ public class EtfException4InvalidTransType extends Exception {
 	public String getError() {
 		return error;
 	}
-
 }
