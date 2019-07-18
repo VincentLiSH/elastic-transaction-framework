@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import cn.panshi.etf.core.EtfDaoRedis.ETF_REDIS_KEYS;
 import cn.panshi.etf.core.demo.EtfDemoComponent;
 import cn.panshi.etf.core.demo.EtfDemoEnum;
 import cn.panshi.etf.core.demo.EtfDemoVo;
@@ -139,5 +140,32 @@ public class EtfTemplateTest {
 		Assert.assertTrue(trNested.getTransSuccess());
 		logger.debug("子交易getRetryCount应该为2:[" + trNested.getRetryCount() + "]");
 		Assert.assertEquals(2, trNested.getRetryCount().intValue());
+	}
+
+	@Test
+	public void testReachMaxRetryTimes() throws Exception {
+		String transEnumValue = EtfDemoEnum.TX_ExceedMaxRetryTimes.name();
+		String transEnumClass = EtfDemoEnum.class.getName();
+
+		EtfDemoVo vo = new EtfDemoVo();
+		vo.setCode("bizId");
+		try {
+			etfDemoComponent.doSometh_Critical_ExceedMaxRetryTimes(vo);
+		} catch (Exception e) {
+			logger.debug(e.getMessage());
+		}
+
+		Thread.sleep(20 * 1000);//sleep 10秒钟 等待etf重试4次 每次间隔2秒（redis误差一般2~3秒）
+
+		EtfTransRecord tr1 = etfDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
+
+		Assert.assertFalse(tr1.getTransSuccess());
+
+		Assert.assertEquals(4, tr1.getRetryCount().intValue());
+
+		String trKey = (String) redisTemplate.opsForList().index(ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST.name(), 0);
+		Assert.assertEquals(
+				etfDaoRedis.calcEtfTransRecordKey(tr1.transTypeEnumClazz, tr1.getTransType(), tr1.getBizId()), trKey);
+
 	}
 }

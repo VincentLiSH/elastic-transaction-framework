@@ -110,11 +110,11 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 			throw new RuntimeException(error);
 		}
 
-		if (exceedMaxQueryTimes(tr)) {
+		if (reachMaxQueryTimes(tr)) {
 			String error = "ETF交易【" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "】超过最大查询次数"
 					+ (tr.getQueryCount() - 1);
 			logger.warn(error);
-			etfDao.updateTransRecordMaxQueryTimes(tr);
+			etfDao.updateTransMaxQueryTimesAndInsertFailureList(tr);
 			throw new EtfException4MaxQueryTimes(error);
 		}
 
@@ -179,8 +179,8 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 		}
 	}
 
-	private boolean exceedMaxQueryTimes(EtfTransRecord tr) {
-		return tr.getQueryCount() != null && tr.getQueryCount().intValue() > EtfAop.getCurrEtfApiAnn().queryMaxTimes();
+	private boolean reachMaxQueryTimes(EtfTransRecord tr) {
+		return tr.getQueryCount() != null && tr.getQueryCount().intValue() >= EtfAop.getCurrEtfApiAnn().queryMaxTimes();
 	}
 
 	private T_return exeRetryMode(EtfTransRecord tr) {
@@ -190,11 +190,11 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 			return null;
 		}
 
-		if (exceedMaxRetryTimes(tr)) {
+		if (reachMaxRetryTimes(tr)) {
 			String error = "ETF交易【" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "】超过最大重试次数"
 					+ (tr.getRetryCount() - 1);
 			logger.warn(error);
-			etfDao.updateTransRecordMaxRetryTimes(tr);
+			etfDao.updateTransMaxRetryTimesAndInsertFailureList(tr);
 			return null;
 		}
 		tr.setRetryCount(tr.getRetryCount() == null ? 1 : tr.getRetryCount() + 1);
@@ -245,8 +245,8 @@ public abstract class EtfTemplate<T_etf_trans_type extends Enum<T_etf_trans_type
 
 	}
 
-	private boolean exceedMaxRetryTimes(EtfTransRecord tr) {
-		return tr.getRetryCount() != null && tr.getRetryCount().intValue() > EtfAop.getCurrEtfApiAnn().retryMaxTimes();
+	private boolean reachMaxRetryTimes(EtfTransRecord tr) {
+		return tr.getRetryCount() != null && tr.getRetryCount().intValue() >= EtfAop.getCurrEtfApiAnn().retryMaxTimes();
 	}
 
 	private T_return exeNormalMode(String bizId) throws EtfException4TransNeedRetry {

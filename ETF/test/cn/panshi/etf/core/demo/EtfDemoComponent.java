@@ -156,4 +156,37 @@ public class EtfDemoComponent {
 		};
 		return etfTemplate.executeEtfTransaction();
 	}
+
+	@EtfAnnTransApi(transEnumClazz = EtfDemoEnum.class, transEnumValue = "TX_ExceedMaxRetryTimes", //
+			retryMaxTimes = 4, retryFirstDelaySeconds = 2, retryIntervalSeconds = 2)
+	public String doSometh_Critical_ExceedMaxRetryTimes(EtfDemoVo etfDemoVo) throws Exception {
+
+		EtfTemplateWithRedisDao<EtfDemoEnum, String> etfTemplate = new EtfTemplateWithRedisDao<EtfDemoEnum, String>(
+				etfDaoRedis) {
+
+			@Override
+			protected String calcEtfBizId() {
+				return etfDemoVo.getCode();
+			}
+
+			@Override
+			protected void doBizWithinEtf() throws EtfException4TransNeedRetry {
+				logger.debug("交易失败 需要重试:" + etfDemoVo.getCode());
+
+				throw new EtfException4TransNeedRetry("交易失败 需要重试");
+			}
+
+			@Override
+			protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {
+				throw new RuntimeException("第" + retryCount + "次重试" + retryTimerKey + "仍然失败");
+			}
+
+			@Override
+			protected String constructResult() {
+				return "return " + etfDemoVo.getCode();
+			}
+
+		};
+		return etfTemplate.executeEtfTransaction();
+	}
 }

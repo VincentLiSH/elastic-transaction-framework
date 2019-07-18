@@ -17,7 +17,7 @@ public interface EtfDao {
 
 	void updateTransRecordRetrySuccess(EtfTransRecord tr, String resultJson);
 
-	void updateTransRecordMaxRetryTimes(EtfTransRecord tr);
+	void updateTransMaxRetryTimesAndInsertFailureList(EtfTransRecord tr);
 
 	void insertEtfRetryQueueAndTimer(EtfTransRecord tr);
 
@@ -25,7 +25,7 @@ public interface EtfDao {
 
 	void insertEtfQueryQueueAndTimer(EtfTransRecord tr);
 
-	void updateTransRecordMaxQueryTimes(EtfTransRecord tr);
+	void updateTransMaxQueryTimesAndInsertFailureList(EtfTransRecord tr);
 
 	void updateTransRecordNextQuery(EtfTransRecord tr, Date nextQueryTime);
 

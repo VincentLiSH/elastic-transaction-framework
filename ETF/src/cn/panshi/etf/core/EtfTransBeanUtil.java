@@ -99,10 +99,10 @@ public class EtfTransBeanUtil implements BeanPostProcessor {
 		JSONObject paramJsonObj = JSONObject.parseObject(tr.getBizStateJson());
 		EtfAop.setCurrEtfBizId(bizId);
 
-		if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_FAILURE_RETRY_TIMER.name())) {
+		if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_TIMER.name())) {
 			EtfAop.setCurrEtfTransRetryTimerKey(expireKey);
 			invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
-		} else if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_TRANS_QUERY_TIMER.name())) {
+		} else if (StringUtils.startsWith(expireKey, ETF_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_TIMER.name())) {
 			EtfAop.setCurrEtfTransQueryTimerKey(expireKey);
 			invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
 		} else {
