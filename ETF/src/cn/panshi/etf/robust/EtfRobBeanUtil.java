@@ -103,6 +103,7 @@ public class EtfRobBeanUtil implements BeanPostProcessor {
 			EtfRobAop.setCurrEtfTransRetryTimerKey(expireKey);
 			invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
 		} else if (StringUtils.startsWith(expireKey, ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_TIMER.name())) {
+
 			EtfRobAop.setCurrEtfTransQueryTimerKey(expireKey);
 			invokeEtfBean(transTypeEnumClazz, transType, paramJsonObj);
 		} else {

@@ -165,8 +165,10 @@ public class EtfRobustTemplateTest {
 
 		String trKey = (String) redisTemplate.opsForList()
 				.index(ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST.name(), 0);
+
 		Assert.assertEquals(
-				etfRobDaoRedis.calcEtfTransRecordKey(tr1.transTypeEnumClazz, tr1.getTransType(), tr1.getBizId()), trKey);
+				etfRobDaoRedis.calcEtfTransRecordKey(tr1.transTypeEnumClazz, tr1.getTransType(), tr1.getBizId()),
+				trKey);
 
 	}
 }

@@ -17,7 +17,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.stereotype.Component;
 
-import cn.panshi.etf.robust.EtfAbstractRedisLockTemplate;
 import cn.panshi.etf.robust.EtfRobTxRecordLog.TRANS_EXE_MODE;
 
 @Component
@@ -143,7 +142,8 @@ public class EtfRobDaoRedis implements EtfRobDao {
 		saveTransRecord(po);
 
 		String trKey = calcEtfTransRecordKey(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
-		redisTemplate.opsForList().leftPush(ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST.toString(), trKey);
+		redisTemplate.opsForList().leftPush(ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST.toString(),
+				trKey);
 		logger.error(trKey + "达到最大重试次数，存入" + ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST + "等待后续处理！");
 	}
 
@@ -184,8 +184,8 @@ public class EtfRobDaoRedis implements EtfRobDao {
 	@Override
 	public void insertEtfQueryQueueAndTimer(EtfRobTxRecord tr) {
 		String queryTime = new SimpleDateFormat("yyyyMMdd_HHmm").format(tr.getNextQueryTime());
-		String key = ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_TIMER + ":" + queryTime + ":" + tr.getTransTypeEnumClazz()
-				+ "@" + tr.getTransType() + "#" + tr.getBizId();
+		String key = ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_TIMER + ":" + queryTime + ":"
+				+ tr.getTransTypeEnumClazz() + "@" + tr.getTransType() + "#" + tr.getBizId();
 		redisTemplate.opsForValue().set(key, "");
 		redisTemplate.expireAt(key, tr.getNextQueryTime());
 	}
@@ -198,7 +198,8 @@ public class EtfRobDaoRedis implements EtfRobDao {
 		saveTransRecord(po);
 
 		String trKey = calcEtfTransRecordKey(tr.getTransTypeEnumClazz(), tr.getTransType(), tr.getBizId());
-		redisTemplate.opsForList().leftPush(ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_QUERY_MAX_TIMES_LIST.toString(), trKey);
+		redisTemplate.opsForList().leftPush(ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_QUERY_MAX_TIMES_LIST.toString(),
+				trKey);
 		logger.error(trKey + "达到最大交易查询次数，存入" + ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_QUERY_MAX_TIMES_LIST + "等待后续处理！");
 	}
 
@@ -265,6 +266,7 @@ public class EtfRobDaoRedis implements EtfRobDao {
 				.substring(ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_TIMER.name().length());
 
 		String queryQueueKey = ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_QUERY_QUEUE + keySurfix;
+
 		redisTemplate.delete(queryQueueKey);
 	}
 }
