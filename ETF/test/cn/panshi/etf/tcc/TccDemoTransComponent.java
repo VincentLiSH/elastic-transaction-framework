@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import cn.panshi.etf.core.EtfException4LockConcurrent;
+import cn.panshi.etf.robust.EtfException4LockConcurrent;
 
 @Component
 public class TccDemoTransComponent {

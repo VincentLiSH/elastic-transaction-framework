@@ -5,10 +5,10 @@ import javax.annotation.Resource;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
-import cn.panshi.etf.core.EtfAnnTransApi;
-import cn.panshi.etf.core.EtfDaoRedis;
-import cn.panshi.etf.core.EtfException4TransNeedRetry;
-import cn.panshi.etf.core.EtfTemplateWithRedisDao;
+import cn.panshi.etf.robust.EtfAnnTransApi;
+import cn.panshi.etf.robust.EtfDaoRedis;
+import cn.panshi.etf.robust.EtfException4TransNeedRetry;
+import cn.panshi.etf.robust.EtfTemplateWithRedisDao;
 
 @Component
 public class EtfDemoComponent2 {

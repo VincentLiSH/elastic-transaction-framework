@@ -1,6 +1,6 @@
 package cn.panshi.etf.tcc;
 
-import cn.panshi.etf.core.EtfAbstractRedisLockTemplate;
+import cn.panshi.etf.robust.EtfAbstractRedisLockTemplate;
 
 public interface EtfTccDao {
 	EtfTccStep loadTccTransRecordStep(String transTypeEnumClazz, String transType, String bizId);
