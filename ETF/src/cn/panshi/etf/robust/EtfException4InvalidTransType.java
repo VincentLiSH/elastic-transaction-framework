@@ -1,4 +1,4 @@
-package cn.panshi.etf.core;
+package cn.panshi.etf.robust;
 
 @SuppressWarnings("serial")
 public class EtfException4InvalidTransType extends Exception {

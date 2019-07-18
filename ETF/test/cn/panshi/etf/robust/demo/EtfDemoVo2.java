@@ -1,4 +1,4 @@
-package cn.panshi.etf.core.demo;
+package cn.panshi.etf.robust.demo;
 
 public class EtfDemoVo2 {
 	String	id;

@@ -13,7 +13,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import cn.panshi.etf.core.demo.EtfDemoComponent;
+import cn.panshi.etf.robust.demo.EtfDemoComponent;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
 @RunWith(SpringJUnit4ClassRunner.class)

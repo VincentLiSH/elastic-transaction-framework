@@ -1,4 +1,4 @@
-package cn.panshi.etf.core;
+package cn.panshi.etf.robust;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -19,7 +19,7 @@ import org.springframework.util.ReflectionUtils;
 
 import com.alibaba.fastjson.JSONObject;
 
-import cn.panshi.etf.core.EtfDaoRedis.ETF_REDIS_KEYS;
+import cn.panshi.etf.robust.EtfDaoRedis.ETF_REDIS_KEYS;
 
 @Component
 public class EtfTransBeanUtil implements BeanPostProcessor {

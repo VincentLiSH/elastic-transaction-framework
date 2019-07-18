@@ -1,4 +1,4 @@
-package cn.panshi.etf.core;
+package cn.panshi.etf.robust;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
 
 import com.alibaba.fastjson.JSONObject;
 
-import cn.panshi.etf.core.EtfTransExeLog.TRANS_EXE_MODE;
+import cn.panshi.etf.robust.EtfTransExeLog.TRANS_EXE_MODE;
 
 /**
  * @author 李英权 <49069554@qq.com>

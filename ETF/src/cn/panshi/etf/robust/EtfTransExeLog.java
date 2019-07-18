@@ -1,4 +1,4 @@
-package cn.panshi.etf.core;
+package cn.panshi.etf.robust;
 
 import java.io.Serializable;
 import java.util.Date;

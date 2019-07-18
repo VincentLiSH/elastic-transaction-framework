@@ -1,4 +1,4 @@
-package cn.panshi.etf.core;
+package cn.panshi.etf.robust;
 
 import java.util.Set;
 
@@ -13,10 +13,12 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import cn.panshi.etf.core.EtfDaoRedis.ETF_REDIS_KEYS;
-import cn.panshi.etf.core.demo.EtfDemoComponent;
-import cn.panshi.etf.core.demo.EtfDemoEnum;
-import cn.panshi.etf.core.demo.EtfDemoVo;
+import cn.panshi.etf.robust.EtfDaoRedis;
+import cn.panshi.etf.robust.EtfTransRecord;
+import cn.panshi.etf.robust.EtfDaoRedis.ETF_REDIS_KEYS;
+import cn.panshi.etf.robust.demo.EtfDemoComponent;
+import cn.panshi.etf.robust.demo.EtfDemoEnum;
+import cn.panshi.etf.robust.demo.EtfDemoVo;
 import junit.framework.Assert;
 
 @SuppressWarnings({ "deprecation", "rawtypes", "unchecked" })
