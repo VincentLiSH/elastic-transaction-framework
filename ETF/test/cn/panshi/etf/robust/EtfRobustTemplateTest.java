@@ -157,18 +157,17 @@ public class EtfRobustTemplateTest {
 
 		Thread.sleep(20 * 1000);//sleep 10秒钟 等待etf重试4次 每次间隔2秒（redis误差一般2~3秒）
 
-		EtfRobTxRecord tr1 = etfRobDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
+		EtfRobTxRecord tr = etfRobDaoRedis.loadEtfTransRecord(transEnumClass, transEnumValue, vo.getCode());
 
-		Assert.assertFalse(tr1.getTransSuccess());
+		Assert.assertFalse(tr.getTransSuccess());
 
-		Assert.assertEquals(4, tr1.getRetryCount().intValue());
+		Assert.assertEquals(4, tr.getRetryCount().intValue());
 
 		String trKey = (String) redisTemplate.opsForList()
 				.index(ETF_ROB_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST.name(), 0);
 
 		Assert.assertEquals(
-				etfRobDaoRedis.calcEtfTransRecordKey(tr1.transTypeEnumClazz, tr1.getTransType(), tr1.getBizId()),
-				trKey);
+				etfRobDaoRedis.calcEtfTransRecordKey(tr.transTypeEnumClazz, tr.getTransType(), tr.getBizId()), trKey);
 
 	}
 }
