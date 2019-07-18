@@ -5,6 +5,7 @@ import java.util.Set;
 import javax.annotation.Resource;
 
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,15 +14,12 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import cn.panshi.etf.robust.EtfDaoRedis;
-import cn.panshi.etf.robust.EtfTransRecord;
 import cn.panshi.etf.robust.EtfDaoRedis.ETF_REDIS_KEYS;
 import cn.panshi.etf.robust.demo.EtfDemoComponent;
 import cn.panshi.etf.robust.demo.EtfDemoEnum;
 import cn.panshi.etf.robust.demo.EtfDemoVo;
-import junit.framework.Assert;
 
-@SuppressWarnings({ "deprecation", "rawtypes", "unchecked" })
+@SuppressWarnings({ "rawtypes", "unchecked" })
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:spring-test*.xml" })
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -165,7 +163,8 @@ public class EtfTemplateTest {
 
 		Assert.assertEquals(4, tr1.getRetryCount().intValue());
 
-		String trKey = (String) redisTemplate.opsForList().index(ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST.name(), 0);
+		String trKey = (String) redisTemplate.opsForList()
+				.index(ETF_REDIS_KEYS.ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST.name(), 0);
 		Assert.assertEquals(
 				etfDaoRedis.calcEtfTransRecordKey(tr1.transTypeEnumClazz, tr1.getTransType(), tr1.getBizId()), trKey);
 

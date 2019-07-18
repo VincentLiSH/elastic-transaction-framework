@@ -36,7 +36,7 @@ public class EtfAop {
 	@Autowired
 	private ThreadPoolTaskExecutor executor;
 
-	@Around("@annotation(cn.panshi.etf.core.EtfAnnTransApi)")
+	@Around("@annotation(cn.panshi.etf.robust.EtfAnnTransApi)")
 	public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
 
 		EtfAnnTransApi exitingEtfContext = EXIST_ETF_INVOKING_CONTEXT.get();
