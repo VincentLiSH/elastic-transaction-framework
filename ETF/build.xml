@@ -2,6 +2,7 @@
 	<!--ivy properties used -->
 	<property name="publish.version" value="0.1" />
 	<property name="ivy.report.todir" value="build" />
+	<property name="ivy.pom.version" value="${publish.version}" />
 
 	<property name="build.debug" value="on" />
 	<property name="build.dir" value="${basedir}/build" />
@@ -85,9 +86,11 @@
 	</target>
 
 	<target name="gen-pom">
-		<ivy:makepom ivyfile="ivy.xml" pomfile="dist/${ant.project.name}.pom">
+		<ivy:makepom ivyfile="ivy.xml" pomfile="dist/${ant.project.name}.pom" conf="default,runtime">
 			<mapping conf="default" scope="compile" />
+			<mapping conf="runtime" scope="runtime" />
 		</ivy:makepom>
+		<copy file="dist/${ant.project.name}.pom" tofile="pom.xml" overwrite="true" />
 	</target>
 
 	<target name="publish-releases" depends="jar,gen-pom">

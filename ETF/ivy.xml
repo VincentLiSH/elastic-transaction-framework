@@ -33,8 +33,8 @@
 		<dependency org="org.springframework" name="spring-expression" rev="${spring.version}" conf="compile;runtime" />
 		<dependency org="org.springframework" name="spring-aop" rev="${spring.version}" conf="compile;runtime" />
 		<dependency org="org.springframework" name="spring-aspects" rev="${spring.version}" conf="compile;runtime" />
-		<dependency org="org.springframework" name="spring-tx" rev="${spring.version}" conf="compile;runtime" />
-		<dependency org="org.springframework" name="spring-oxm" rev="${spring.version}" conf="compile;runtime" />
+		<dependency org="org.springframework" name="spring-tx" rev="${spring.version}" conf="test->default" />
+		<dependency org="org.springframework" name="spring-oxm" rev="${spring.version}" conf="test->default" />
 
 		<dependency org="net.sf.ezmorph" name="ezmorph" rev="1.0.6" conf="compile;runtime" />
 		<dependency org="com.alibaba" name="fastjson" rev="1.2.9" conf="compile;runtime" />
