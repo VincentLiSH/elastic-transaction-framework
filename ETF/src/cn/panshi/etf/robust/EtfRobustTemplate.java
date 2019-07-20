@@ -35,7 +35,9 @@ import cn.panshi.etf.robust.EtfRobTxRecordLog.TRANS_EXE_MODE;
  * http://note.youdao.com/noteshare?id=31c50bce0de8f29f9bfab5e478dbd73b 
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_trans_type>, T_return> {
+public abstract class EtfRobustTemplate<T_etf_rob_trans_enum extends Enum<T_etf_rob_trans_enum>, T_return> {
+	private static final int ETF_ROB_LOCK_DEFAULT_EXPIRE_SECONDS = 600;
+
 	static Logger logger = Logger.getLogger(EtfRobustTemplate.class);
 
 	/**
@@ -46,7 +48,7 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 
 	EtfRobDao etfRobDao;
 
-	private T_etf_trans_type transType;
+	private T_etf_rob_trans_enum currEtfRobTxEnumValue;
 
 	protected EtfRobustTemplate(EtfRobDao etfRobDao) {
 		super();
@@ -63,26 +65,29 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 			bizId = EtfRobAop.getCurrEtfBizId();
 		}
 
-		transType = calcCurrTransType();
+		currEtfRobTxEnumValue = calcCurrRobTxEnumValue();
 
-		EtfAbstractRedisLockTemplate etfLock = etfRobDao.getEtfConcurrentLock(transType.getClass().getName(),
-				transType.toString(), bizId, 600);
+		EtfAbstractRedisLockTemplate etfLock = etfRobDao.getEtfConcurrentLock(
+				currEtfRobTxEnumValue.getClass().getName(), currEtfRobTxEnumValue.name(), bizId,
+				ETF_ROB_LOCK_DEFAULT_EXPIRE_SECONDS);
 
 		boolean lockSuccess = etfLock.lock();
 		if (!lockSuccess) {
-			String error = "ETF交易" + getCurrEtfTransExeKey(transType, bizId) + "获取锁失败";
+			String error = "ETF Robust Tx[" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, bizId)
+					+ "] failed to get lock";
 			logger.warn(error);
 			throw new EtfRobErr4LockConcurrent(error);
 		}
 		try {
-			logger.debug("ETF trans[" + getCurrEtfTransExeKey(transType, bizId) + "] started at mode " + exeMode);
+			logger.debug("ETF trans[" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, bizId) + "] started at mode "
+					+ exeMode);
 
 			if (exeMode == TRANS_EXE_MODE.normal) {
 				return this.exeNormalMode(bizId);
 			} else {
-				EtfRobTxRecord tr = etfRobDao.loadEtfTransRecord(transType.getClass().getName(), transType.toString(),
-						bizId);
-				logger.debug("非normal模式运行，加载transRecord" + getCurrEtfTransExeKey(transType, tr.getBizId())
+				EtfRobTxRecord tr = etfRobDao.loadEtfTransRecord(currEtfRobTxEnumValue.getClass().getName(),
+						currEtfRobTxEnumValue.name(), bizId);
+				logger.debug("非normal模式运行，加载transRecord" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId())
 						+ " with BizStateJson:" + tr.getBizStateJson());
 
 				if (exeMode == TRANS_EXE_MODE.retry) {
@@ -91,27 +96,29 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 					this.exeQueryMode(tr);
 					return null;
 				} else {
-					throw new EtfRobErr4InvalidTransType(
-							"ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "运行模式不合法" + exeMode);
+					throw new EtfRobErr4InvalidTransType("ETF交易"
+							+ getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "运行模式不合法" + exeMode);
 				}
 			}
 		} finally {
 			if (lockSuccess) {
 				Long unlock = etfLock.unlock();
-				logger.debug("ETF交易" + getCurrEtfTransExeKey(transType, bizId) + "执行" + exeMode + "后 释放锁：" + unlock);
+				logger.debug("ETF交易" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, bizId) + "执行" + exeMode + "后 释放锁："
+						+ unlock);
 			}
 		}
 	}
 
 	private void exeQueryMode(EtfRobTxRecord tr) {
 		if (tr.getQueryTransSuccess() != null && tr.getQueryTransSuccess()) {
-			String error = "ETF交易【" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "】已经查询交易结果成功，不应继续轮询交易结果！";
+			String error = "ETF交易【" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId())
+					+ "】已经查询交易结果成功，不应继续轮询交易结果！";
 			logger.warn(error);
 			throw new RuntimeException(error);
 		}
 
 		if (reachMaxQueryTimes(tr)) {
-			String error = "ETF交易【" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "】超过最大查询次数"
+			String error = "ETF交易【" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "】超过最大查询次数"
 					+ (tr.getQueryCount() - 1);
 			logger.warn(error);
 			etfRobDao.updateTransMaxQueryTimesAndInsertFailureList(tr);
@@ -121,23 +128,23 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 		tr.setQueryCount(tr.getQueryCount() == null ? 1 : tr.getQueryCount() + 1);
 		Exception ex = null;
 		try {
-			logger.info(
-					"ETF交易【" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "】开始第" + tr.getQueryCount() + "次查询");
+			logger.info("ETF交易【" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "】开始第"
+					+ tr.getQueryCount() + "次查询");
 
 			boolean querySuccess = doTransQueryOrNextTransByEtf(EtfRobAop.getCurrEtfTransQueryTimerKey(),
 					tr.getQueryCount());// 回调子类的交易查询逻辑
 
 			if (querySuccess) {
-				logger.info("ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "第" + tr.getQueryCount()
-						+ "次查询成功！");
+				logger.info("ETF交易" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "第"
+						+ tr.getQueryCount() + "次查询成功！");
 			} else {
 				ex = new EtfRobErr4TransQueryNoResult();
-				logger.info("ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "第" + tr.getQueryCount()
-						+ "次查询无结果，继续。。。");
+				logger.info("ETF交易" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "第"
+						+ tr.getQueryCount() + "次查询无结果，继续。。。");
 			}
 		} catch (Exception e) {
-			logger.error("ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "第" + tr.getQueryCount() + "次查询失败："
-					+ e.getMessage());
+			logger.error("ETF交易" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "第"
+					+ tr.getQueryCount() + "次查询失败：" + e.getMessage());
 			ex = e;
 		} finally {
 			if (ex != null) {
@@ -180,18 +187,19 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 	}
 
 	private boolean reachMaxQueryTimes(EtfRobTxRecord tr) {
-		return tr.getQueryCount() != null && tr.getQueryCount().intValue() >= EtfRobAop.getCurrEtfApiAnn().queryMaxTimes();
+		return tr.getQueryCount() != null
+				&& tr.getQueryCount().intValue() >= EtfRobAop.getCurrEtfApiAnn().queryMaxTimes();
 	}
 
 	private T_return exeRetryMode(EtfRobTxRecord tr) {
 		if (tr.getTransSuccess() != null && tr.getTransSuccess()) {
-			String error = "ETF交易【" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "】已经执行成功，不应继续重试";
+			String error = "ETF交易【" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "】已经执行成功，不应继续重试";
 			logger.warn(error);
 			return null;
 		}
 
 		if (reachMaxRetryTimes(tr)) {
-			String error = "ETF交易【" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "】超过最大重试次数"
+			String error = "ETF交易【" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "】超过最大重试次数"
 					+ (tr.getRetryCount() - 1);
 			logger.warn(error);
 			etfRobDao.updateTransMaxRetryTimesAndInsertFailureList(tr);
@@ -201,18 +209,18 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 		Exception ex = null;
 		T_return result = null;
 		try {
-			logger.info(
-					"ETF交易【" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "】开始第" + tr.getRetryCount() + "次重试");
+			logger.info("ETF交易【" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "】开始第"
+					+ tr.getRetryCount() + "次重试");
 			doRetryByEtf(EtfRobAop.getCurrEtfTransRetryTimerKey(), tr.getRetryCount());
-			logger.info(
-					"ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "第" + tr.getRetryCount() + "次重试成功！");
+			logger.info("ETF交易" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "第"
+					+ tr.getRetryCount() + "次重试成功！");
 
 			result = constructResult();
 
 			return result;
 		} catch (Exception e) {
-			logger.error("ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "第" + tr.getRetryCount()
-					+ "次重试又失败：" + e.getMessage());
+			logger.error("ETF交易" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "第"
+					+ tr.getRetryCount() + "次重试又失败：" + e.getMessage());
 			ex = e;
 			throw e;
 		} finally {
@@ -246,7 +254,8 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 	}
 
 	private boolean reachMaxRetryTimes(EtfRobTxRecord tr) {
-		return tr.getRetryCount() != null && tr.getRetryCount().intValue() >= EtfRobAop.getCurrEtfApiAnn().retryMaxTimes();
+		return tr.getRetryCount() != null
+				&& tr.getRetryCount().intValue() >= EtfRobAop.getCurrEtfApiAnn().retryMaxTimes();
 	}
 
 	private T_return exeNormalMode(String bizId) throws EtfRobErr4TransNeedRetry {
@@ -287,11 +296,11 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 			tr.setNextRetryTime(this.calcFutureTime(EtfRobAop.getCurrEtfApiAnn().retryFirstDelaySeconds()));
 			tr.setRetryCount(0);
 			etfRobDao.insertEtfRetryQueueAndTimer(tr);
-			logger.warn(
-					"ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "抛出EtfException4TransNeedRetry需要重试");
+			logger.warn("ETF交易" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId())
+					+ "抛出EtfException4TransNeedRetry需要重试");
 		} else if (ex instanceof EtfRobErr4TransDuplicate) {
-			logger.warn("EtfException4TransDuplicate 直接返回" + getCurrEtfTransExeKey(transType, tr.getBizId())
-					+ "之前的结果，不保存ETF交易记录 以免覆盖之前交易！ ");
+			logger.warn("EtfException4TransDuplicate 直接返回"
+					+ getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "之前的结果，不保存ETF交易记录 以免覆盖之前交易！ ");
 			etfRobDao.addTransDuplicateInvokeLog(tr);
 			return;
 		}
@@ -319,10 +328,9 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 	private void try2TransQuery(EtfRobTxRecord tr) {
 		EtfRobustTx apiAnn = EtfRobAop.getCurrEtfApiAnn();
 		if (apiAnn.queryMaxTimes() > 0) {
-			logger.info("ETF交易" + getCurrEtfTransExeKey(transType, tr.getBizId()) + "执行完成，但需要交易查询。。。");
+			logger.info("ETF交易" + getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId()) + "执行完成，但需要交易查询。。。");
 			int futureSeconds = (tr.getQueryCount() == null || tr.getQueryCount().intValue() == 1)
-					? apiAnn.queryFirstDelaySeconds()
-					: apiAnn.queryIntervalSeconds();
+					? apiAnn.queryFirstDelaySeconds() : apiAnn.queryIntervalSeconds();
 			tr.setNextQueryTime(this.calcFutureTime(futureSeconds));
 			tr.setQueryCount(0);
 			etfRobDao.insertEtfQueryQueueAndTimer(tr);
@@ -336,12 +344,12 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 		return cal.getTime();
 	}
 
-	private T_etf_trans_type calcCurrTransType() throws EtfRobErr4InvalidTransType {
+	private T_etf_rob_trans_enum calcCurrRobTxEnumValue() throws EtfRobErr4InvalidTransType {
 		EtfRobustTx ann = EtfRobAop.getCurrEtfApiAnn();
 		Enum[] enumConstants = ann.transEnumClazz().getEnumConstants();
 		for (Enum e : enumConstants) {
 			if (e.name().equals(ann.transEnumValue())) {
-				return (T_etf_trans_type) e;
+				return (T_etf_rob_trans_enum) e;
 			}
 		}
 		String error = ann.transEnumValue() + " is not a valid value of enum " + ann.transEnumClazz().getName();
@@ -349,7 +357,7 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 		throw new EtfRobErr4InvalidTransType(error);
 	}
 
-	private String getCurrEtfTransExeKey(T_etf_trans_type type, String bizId) {
+	private String getCurrRobTxDisplayName(T_etf_rob_trans_enum type, String bizId) {
 		return type.getClass().getName() + "." + type.toString() + "#" + bizId;
 	}
 
@@ -365,8 +373,8 @@ public abstract class EtfRobustTemplate<T_etf_trans_type extends Enum<T_etf_tran
 	private EtfRobTxRecord constructNewEtfTransRecord(String bizId) {
 		EtfRobTxRecord tr = new EtfRobTxRecord();
 		tr.setBizId(bizId);
-		tr.setTransType(transType.toString());
-		tr.setTransTypeEnumClazz(transType.getClass().getName());
+		tr.setTransType(currEtfRobTxEnumValue.name());
+		tr.setTransTypeEnumClazz(currEtfRobTxEnumValue.getClass().getName());
 		return tr;
 	}
 
