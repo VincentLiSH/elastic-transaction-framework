@@ -10,7 +10,7 @@ import cn.panshi.etf.robust.EtfRobDaoRedis;
 import cn.panshi.etf.robust.EtfRobErr4MaxQueryTimes;
 import cn.panshi.etf.robust.EtfRobErr4TransNeedRetry;
 import cn.panshi.etf.robust.EtfRobErr4TransQueryReturnFailureResult;
-import cn.panshi.etf.robust.EtfRobustTemplateRedis;
+import cn.panshi.etf.robust.EtfRobustTxTemplateRedis;
 
 @Component
 public class EtfDemoComponent {
@@ -23,7 +23,7 @@ public class EtfDemoComponent {
 	@EtfRobustTx(transEnumClazz = EtfDemoEnum.class, transEnumValue = "TX_simple")
 	public String doSometh_Simple(EtfDemoVo etfDemoVo) throws Exception {
 
-		EtfRobustTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTemplateRedis<EtfDemoEnum, String>(
+		EtfRobustTxTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTxTemplateRedis<EtfDemoEnum, String>(
 				etfRobDaoRedis) {
 
 			@Override
@@ -50,7 +50,7 @@ public class EtfDemoComponent {
 			retryMaxTimes = 3, retryFirstDelaySeconds = 5, retryIntervalSeconds = 20)
 	public String doSometh_Critical_NeedFailureRetry(EtfDemoVo etfDemoVo) throws Exception {
 
-		EtfRobustTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTemplateRedis<EtfDemoEnum, String>(
+		EtfRobustTxTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTxTemplateRedis<EtfDemoEnum, String>(
 				etfRobDaoRedis) {
 
 			@Override
@@ -84,7 +84,7 @@ public class EtfDemoComponent {
 			queryMaxTimes = 5, queryFirstDelaySeconds = 5, queryIntervalSeconds = 60)
 	public String doSometh_Critical_NeedTransQueryOnSuccess(EtfDemoVo etfDemoVo) throws Exception {
 
-		EtfRobustTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTemplateRedis<EtfDemoEnum, String>(
+		EtfRobustTxTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTxTemplateRedis<EtfDemoEnum, String>(
 				etfRobDaoRedis) {
 
 			@Override
@@ -117,7 +117,7 @@ public class EtfDemoComponent {
 			retryMaxTimes = 3, retryFirstDelaySeconds = 3, retryIntervalSeconds = 5)
 	public String doSometh_AndThen_Invoke_Another_ETF(EtfDemoVo etfDemoVo) throws Exception {
 
-		EtfRobustTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTemplateRedis<EtfDemoEnum, String>(
+		EtfRobustTxTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTxTemplateRedis<EtfDemoEnum, String>(
 				etfRobDaoRedis) {
 
 			@Override
@@ -161,7 +161,7 @@ public class EtfDemoComponent {
 			retryMaxTimes = 4, retryFirstDelaySeconds = 2, retryIntervalSeconds = 2)
 	public String doSometh_Critical_ExceedMaxRetryTimes(EtfDemoVo etfDemoVo) throws Exception {
 
-		EtfRobustTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTemplateRedis<EtfDemoEnum, String>(
+		EtfRobustTxTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTxTemplateRedis<EtfDemoEnum, String>(
 				etfRobDaoRedis) {
 
 			@Override

@@ -23,7 +23,7 @@ import cn.panshi.etf.robust.demo.EtfDemoVo;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:spring-test*.xml" })
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class EtfRobustTemplateTest {
+public class EtfRobustTxTemplateTest {
 	Logger logger = Logger.getLogger(EtfDemoComponent.class);
 	@Resource
 	EtfDemoComponent etfDemoComponent;

@@ -34,10 +34,10 @@ import cn.panshi.etf.robust.EtfRobTxRecordLog.TRANS_EXE_MODE;
  * @author 李英权 <49069554@qq.com>
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public abstract class EtfRobustTemplate<T_etf_rob_trans_enum extends Enum<T_etf_rob_trans_enum>, T_return> {
+public abstract class EtfRobustTxTemplate<T_etf_rob_trans_enum extends Enum<T_etf_rob_trans_enum>, T_return> {
 	private static final int ETF_ROB_LOCK_DEFAULT_EXPIRE_SECONDS = 600;
 
-	static Logger logger = Logger.getLogger(EtfRobustTemplate.class);
+	static Logger logger = Logger.getLogger(EtfRobustTxTemplate.class);
 
 	/**
 	 * 获取第二个泛型的class，用于处理幂等 直接返回结果   http://www.blogjava.net/calvin/archive/2009/12/10/43830.html
@@ -49,7 +49,7 @@ public abstract class EtfRobustTemplate<T_etf_rob_trans_enum extends Enum<T_etf_
 
 	private T_etf_rob_trans_enum currEtfRobTxEnumValue;
 
-	protected EtfRobustTemplate(EtfRobDao etfRobDao) {
+	protected EtfRobustTxTemplate(EtfRobDao etfRobDao) {
 		super();
 		this.etfRobDao = etfRobDao;
 	}

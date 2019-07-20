@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import cn.panshi.etf.robust.EtfRobustTx;
 import cn.panshi.etf.robust.EtfRobDaoRedis;
 import cn.panshi.etf.robust.EtfRobErr4TransNeedRetry;
-import cn.panshi.etf.robust.EtfRobustTemplateRedis;
+import cn.panshi.etf.robust.EtfRobustTxTemplateRedis;
 
 @Component
 public class EtfDemoComponent2 {
@@ -20,7 +20,7 @@ public class EtfDemoComponent2 {
 			retryMaxTimes = 3, retryFirstDelaySeconds = 5, retryIntervalSeconds = 10)
 	public String doSometh_Simple_By_Another_Etf(EtfDemoVo2 etfDemoVo) throws Exception {
 
-		EtfRobustTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTemplateRedis<EtfDemoEnum, String>(
+		EtfRobustTxTemplateRedis<EtfDemoEnum, String> etfTemplate = new EtfRobustTxTemplateRedis<EtfDemoEnum, String>(
 				etfRobDaoRedis) {
 
 			@Override
