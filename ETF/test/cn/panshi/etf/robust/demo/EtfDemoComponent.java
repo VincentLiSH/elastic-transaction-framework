@@ -27,23 +27,23 @@ public class EtfDemoComponent {
 				etfRobDaoRedis) {
 
 			@Override
-			protected String calcEtfBizId() {
+			protected String calcRobustTxBizId() {
 				return etfDemoVo.getCode();
 			}
 
 			@Override
-			protected void doBizWithinEtf() throws EtfRobErr4TransNeedRetry {
+			protected void defienBizOfNormal() throws EtfRobErr4TransNeedRetry {
 				logger.debug("这是个简单交易，无需失败后重试 或 成功后结果查询，使用etf仅仅为了自动记录交易日志:" + etfDemoVo.getCode());
 			}
 
 			@Override
-			protected String constructResult() {
+			protected String constructReturnValue() {
 				return "return " + etfDemoVo.getCode();
 			}
 
 		};
 
-		return etfTemplate.executeEtfTransaction();
+		return etfTemplate.executeEtfRobustTransaction();
 	}
 
 	@EtfRobustTx(transEnumClazz = EtfDemoEnum.class, transEnumValue = "TX_need_retry", //
@@ -54,30 +54,30 @@ public class EtfDemoComponent {
 				etfRobDaoRedis) {
 
 			@Override
-			protected String calcEtfBizId() {
+			protected String calcRobustTxBizId() {
 				return etfDemoVo.getCode();
 			}
 
 			@Override
-			protected void doBizWithinEtf() throws EtfRobErr4TransNeedRetry {
+			protected void defienBizOfNormal() throws EtfRobErr4TransNeedRetry {
 				logger.debug("交易失败 需要重试:" + etfDemoVo.getCode());
 
 				throw new EtfRobErr4TransNeedRetry("交易失败 需要重试");
 			}
 
 			@Override
-			protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {
+			protected void defineBizOfRetryBizOnFailure(String retryTimerKey, Integer retryCount) {
 				logger.debug("第" + retryCount + "次重试" + retryTimerKey + "一次性成功");
 				// throw new RuntimeException("第" + retryCount + "次重试" + retryTimerKey + "重试仍然失败");
 			}
 
 			@Override
-			protected String constructResult() {
+			protected String constructReturnValue() {
 				return "return " + etfDemoVo.getCode();
 			}
 
 		};
-		return etfTemplate.executeEtfTransaction();
+		return etfTemplate.executeEtfRobustTransaction();
 	}
 
 	@EtfRobustTx(transEnumClazz = EtfDemoEnum.class, transEnumValue = "TX_need_trans_query_on_success", //
@@ -88,28 +88,28 @@ public class EtfDemoComponent {
 				etfRobDaoRedis) {
 
 			@Override
-			protected String calcEtfBizId() {
+			protected String calcRobustTxBizId() {
 				return etfDemoVo.getCode();
 			}
 
 			@Override
-			protected void doBizWithinEtf() throws EtfRobErr4TransNeedRetry {
+			protected void defienBizOfNormal() throws EtfRobErr4TransNeedRetry {
 				logger.debug("交易完成，需要轮询交易结果:" + etfDemoVo.getCode());
 			}
 
 			@Override
-			protected String constructResult() {
+			protected String constructReturnValue() {
 				return "return " + etfDemoVo.getCode();
 			}
 
 			@Override
-			protected boolean doTransQueryOrNextTransByEtf(String queryTimerKey, Integer queryCount)
+			protected boolean defineBizOfQueryOrNextOnSuccess(String queryTimerKey, Integer queryCount)
 					throws EtfRobErr4TransQueryReturnFailureResult, EtfRobErr4MaxQueryTimes {
 				logger.debug("第" + queryCount + "次轮询交易结果" + queryTimerKey + "一次性成功");
 				return true;
 			}
 		};
-		return etfTemplate.executeEtfTransaction();
+		return etfTemplate.executeEtfRobustTransaction();
 	}
 
 	@EtfRobustTx(transEnumClazz = EtfDemoEnum.class, transEnumValue = "AndThen_Invoke_Another_ETF", //
@@ -121,27 +121,27 @@ public class EtfDemoComponent {
 				etfRobDaoRedis) {
 
 			@Override
-			protected String calcEtfBizId() {
+			protected String calcRobustTxBizId() {
 				return etfDemoVo.getCode();
 			}
 
 			@Override
-			protected void doBizWithinEtf() throws EtfRobErr4TransNeedRetry {
+			protected void defienBizOfNormal() throws EtfRobErr4TransNeedRetry {
 				throw new EtfRobErr4TransNeedRetry("失败 需要重试一次");
 			}
 
 			@Override
-			protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {
+			protected void defineBizOfRetryBizOnFailure(String retryTimerKey, Integer retryCount) {
 				logger.debug("一次重试完成，需要轮询交易结果:" + etfDemoVo.getCode());
 			}
 
 			@Override
-			protected String constructResult() {
+			protected String constructReturnValue() {
 				return "return " + etfDemoVo.getCode();
 			}
 
 			@Override
-			protected boolean doTransQueryOrNextTransByEtf(String queryTimerKey, Integer queryCount)
+			protected boolean defineBizOfQueryOrNextOnSuccess(String queryTimerKey, Integer queryCount)
 					throws EtfRobErr4TransQueryReturnFailureResult, EtfRobErr4MaxQueryTimes {
 				logger.debug("第" + queryCount + "次轮询交易结果" + queryTimerKey + "一次性成功");
 				try {
@@ -154,7 +154,7 @@ public class EtfDemoComponent {
 				return true;
 			}
 		};
-		return etfTemplate.executeEtfTransaction();
+		return etfTemplate.executeEtfRobustTransaction();
 	}
 
 	@EtfRobustTx(transEnumClazz = EtfDemoEnum.class, transEnumValue = "TX_ExceedMaxRetryTimes", //
@@ -165,28 +165,28 @@ public class EtfDemoComponent {
 				etfRobDaoRedis) {
 
 			@Override
-			protected String calcEtfBizId() {
+			protected String calcRobustTxBizId() {
 				return etfDemoVo.getCode();
 			}
 
 			@Override
-			protected void doBizWithinEtf() throws EtfRobErr4TransNeedRetry {
+			protected void defienBizOfNormal() throws EtfRobErr4TransNeedRetry {
 				logger.debug("交易失败 需要重试:" + etfDemoVo.getCode());
 
 				throw new EtfRobErr4TransNeedRetry("交易失败 需要重试");
 			}
 
 			@Override
-			protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {
+			protected void defineBizOfRetryBizOnFailure(String retryTimerKey, Integer retryCount) {
 				throw new RuntimeException("第" + retryCount + "次重试" + retryTimerKey + "仍然失败");
 			}
 
 			@Override
-			protected String constructResult() {
+			protected String constructReturnValue() {
 				return "return " + etfDemoVo.getCode();
 			}
 
 		};
-		return etfTemplate.executeEtfTransaction();
+		return etfTemplate.executeEtfRobustTransaction();
 	}
 }

@@ -6,10 +6,10 @@ public interface EtfRobDao {
 
 	void validateTransDuplicate(EtfRobTxRecord tr) throws EtfRobErr4TransDuplicate;
 
-	EtfRobTxRecord loadEtfTransRecord(String transTypeEnumClazz, String transType, String bizId);
+	EtfRobTxRecord loadEtfTransRecord(String robTxEnumClazzName, String robTxEnumValueName, String bizId);
 
-	EtfAbstractRedisLockTemplate getEtfConcurrentLock(String transTypeEnumClazz, String transTypeCode, String bizId,
-			int expireSeconds);
+	EtfAbstractRedisLockTemplate getEtfConcurrentLock(String robTxEnumClazzName, String robTxEnumValueName,
+			String bizId, int expireSeconds);
 
 	String saveTransRecord(EtfRobTxRecord tr);
 

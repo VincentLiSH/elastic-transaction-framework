@@ -24,23 +24,23 @@ public class EtfDemoComponent2 {
 				etfRobDaoRedis) {
 
 			@Override
-			protected String calcEtfBizId() {
+			protected String calcRobustTxBizId() {
 				return etfDemoVo.getCode();
 			}
 
 			@Override
-			protected void doBizWithinEtf() throws EtfRobErr4TransNeedRetry {
+			protected void defienBizOfNormal() throws EtfRobErr4TransNeedRetry {
 				logger.debug("这是个被另一ETF组件调用的ETF交易（需要重试2次）:" + etfDemoVo.getCode());
 				throw new EtfRobErr4TransNeedRetry("test 重试");
 			}
 
 			@Override
-			protected String constructResult() {
+			protected String constructReturnValue() {
 				return "return " + etfDemoVo.getCode();
 			}
 
 			@Override
-			protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {
+			protected void defineBizOfRetryBizOnFailure(String retryTimerKey, Integer retryCount) {
 				if (retryCount.intValue() == 1) {
 					throw new RuntimeException("第一次重试 故意失败");
 				} else {
@@ -49,6 +49,6 @@ public class EtfDemoComponent2 {
 			}
 		};
 
-		return etfTemplate.executeEtfTransaction();
+		return etfTemplate.executeEtfRobustTransaction();
 	}
 }

@@ -63,19 +63,18 @@ public class EtfRobDaoRedis implements EtfRobDao {
 	}
 
 	@Override
-	public EtfAbstractRedisLockTemplate getEtfConcurrentLock(String etfTransTypeEnumClass, String etfTransTypeEnumValue,
+	public EtfAbstractRedisLockTemplate getEtfConcurrentLock(String robTxEnumClazzName, String robTxEnumValueName,
 			String bizId, int expireSeconds) {
 		return new EtfAbstractRedisLockTemplate(redisTemplate, expireSeconds, UUID.randomUUID().toString()) {
 			@Override
 			protected String constructKey() {
-				return calcEtfInvokeLockKey(etfTransTypeEnumClass, etfTransTypeEnumValue, bizId);
+				return calcEtfInvokeLockKey(robTxEnumClazzName, robTxEnumValueName, bizId);
 			}
 		};
 	}
 
-	String calcEtfInvokeLockKey(String etfTransTypeEnumClass, String etfTransTypeEnumValue, String bizId) {
-		return ETF_ROB_REDIS_KEYS.ETF_ROBUST_LOCKER + ":" + etfTransTypeEnumClass + "@" + etfTransTypeEnumValue + "#"
-				+ bizId;
+	String calcEtfInvokeLockKey(String robTxEnumClazzName, String robTxEnumValueName, String bizId) {
+		return ETF_ROB_REDIS_KEYS.ETF_ROBUST_LOCKER + ":" + robTxEnumClazzName + "@" + robTxEnumValueName + "#" + bizId;
 	}
 
 	@Override
@@ -87,8 +86,8 @@ public class EtfRobDaoRedis implements EtfRobDao {
 	}
 
 	@Override
-	public EtfRobTxRecord loadEtfTransRecord(String transTypeEnumClazz, String transType, String bizId) {
-		String key = calcEtfTransRecordKey(transTypeEnumClazz, transType, bizId);
+	public EtfRobTxRecord loadEtfTransRecord(String robTxEnumClazzName, String robTxEnumValueName, String bizId) {
+		String key = calcEtfTransRecordKey(robTxEnumClazzName, robTxEnumValueName, bizId);
 
 		return (EtfRobTxRecord) redisTemplate.opsForValue().get(key);
 	}
@@ -109,8 +108,9 @@ public class EtfRobDaoRedis implements EtfRobDao {
 		return key;
 	}
 
-	protected String calcEtfTransRecordKey(String transTypeEnumClazz, String transType, String bizId) {
-		return ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_RECORD + ":" + transTypeEnumClazz + "@" + transType + "#" + bizId;
+	protected String calcEtfTransRecordKey(String robTxEnumClazzName, String robTxEnumValueName, String bizId) {
+		return ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_RECORD + ":" + robTxEnumClazzName + "@" + robTxEnumValueName + "#"
+				+ bizId;
 	}
 
 	@Override
