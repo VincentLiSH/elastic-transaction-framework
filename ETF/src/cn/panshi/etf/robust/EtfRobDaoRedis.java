@@ -9,8 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,20 +21,23 @@ import cn.panshi.etf.robust.EtfRobTxRecordLog.TRANS_EXE_MODE;
 @Component
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class EtfRobDaoRedis implements EtfRobDao {
-	static Logger logger = LoggerFactory.getLogger(EtfRobDaoRedis.class);
+	static Logger logger = Logger.getLogger(EtfRobDaoRedis.class);
 	@Resource
 	RedisTemplate redisTemplate;
 
 	public enum ETF_ROB_REDIS_KEYS {
 		/**
-		 * 
+		 * concurrent lock
 		 */
 		ETF_ROBUST_LOCKER,
 		/**
-		 * key示例 ETF_TRANS_RECORD:com.xxx.EtfEnum@transA#bizId123 value示例
-		 * {"tr":{},"trLogJsonArry":[{},{}]
+		 * ETF Robust Tx record
 		 */
-		ETF_ROBUST_TRANS_RECORD,
+		ETF_ROBUST_TX_RECORD,
+		/**
+		 * 交易记录销毁计时器
+		 */
+		ETF_ROBUST_TX_RECORD_DESTROYER_TIMER,
 		/**
 		 * redis中此前缀的key充当了retry重试任务的定时器： 
 		 * --为其设置过期时间，设为希望重试任务执行的时间
@@ -57,9 +59,15 @@ public class EtfRobDaoRedis implements EtfRobDao {
 		/**
 		 * 跟ETF_FAILURE_RETRY_QUEUE类似，用于提高交易查询机制的可靠性
 		 */
-		ETF_ROBUST_TRANS_QUERY_QUEUE, //
-		ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST, //达到最大重试次数 仍然失败后，trId存入此list
-		ETF_ROBUST_FAILURE_QUERY_MAX_TIMES_LIST;//达到最大重试次数 仍然失败后，trId存入此list
+		ETF_ROBUST_TRANS_QUERY_QUEUE,
+		/**
+		 * 达到最大重试次数 仍然失败后，trId存入此list
+		 */
+		ETF_ROBUST_FAILURE_RETRY_MAX_TIMES_LIST,
+		/**
+		 * 达到最大重试次数 仍然失败后，trId存入此list
+		 */
+		ETF_ROBUST_FAILURE_QUERY_MAX_TIMES_LIST;
 	}
 
 	@Override
@@ -98,18 +106,31 @@ public class EtfRobDaoRedis implements EtfRobDao {
 
 		redisTemplate.opsForValue().set(key, tr);
 
-		if (tr.getTransSuccess() != null && tr.getTransSuccess() && tr.getRetryCount() == null
-				&& tr.getQueryCount() == null) {
-			int ttl = 3600 * 24;
-			logger.debug("ETF交易" + key + "执行无异常，设置过期时间" + ttl + "秒");
-			redisTemplate.expire(key, ttl, TimeUnit.SECONDS);//
+		if (tr.getTransSuccess() != null && tr.getNextQueryTime() == null && tr.getNextRetryTime() == null) {
+			this.log4TxSummaryOnCompleteThenExpire(key, tr);
 		}
-
 		return key;
 	}
 
+	private void log4TxSummaryOnCompleteThenExpire(String key, EtfRobTxRecord tr) {
+		int ttlSeconds = 3600 * 1;
+
+		String summary = "Tx[" + key + "]'s lifecycle ended with " + (tr.getTransSuccess() ? "success:)" : "failure!");
+
+		if (tr.getRetryCount() != null) {
+			summary += ("Retried " + tr.getRetryCount() + " times.");
+		}
+
+		if (tr.getQueryTransSuccess() != null) {
+			summary += "And then do transQueryOrNext " + (tr.getQueryTransSuccess() ? "success:)" : "failure!");
+		}
+		logger.debug(summary);
+
+		redisTemplate.expire(key, ttlSeconds, TimeUnit.SECONDS);
+	}
+
 	protected String calcEtfTransRecordKey(String robTxEnumClazzName, String robTxEnumValueName, String bizId) {
-		return ETF_ROB_REDIS_KEYS.ETF_ROBUST_TRANS_RECORD + ":" + robTxEnumClazzName + "@" + robTxEnumValueName + "#"
+		return ETF_ROB_REDIS_KEYS.ETF_ROBUST_TX_RECORD + ":" + robTxEnumClazzName + "@" + robTxEnumValueName + "#"
 				+ bizId;
 	}
 

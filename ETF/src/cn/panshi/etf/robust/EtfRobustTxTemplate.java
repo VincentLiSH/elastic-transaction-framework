@@ -55,8 +55,8 @@ public abstract class EtfRobustTxTemplate<T_etf_rob_trans_enum extends Enum<T_et
 	}
 
 	/**
-	 * 
-	 * @return
+	 * Start to execute your business defined with the ETF Robust Transaction template
+	 * @return what you defined in constructReturnValue
 	 * @throws EtfRobErr4InvalidTransType
 	 * @throws EtfRobErr4LockConcurrent
 	 */
@@ -97,9 +97,9 @@ public abstract class EtfRobustTxTemplate<T_etf_rob_trans_enum extends Enum<T_et
 						+ " mode,loaded transRecord.BizStateJson:" + tr.getBizStateJson());
 
 				if (exeMode == TRANS_EXE_MODE.retry) {
-					return this.exeRetryMode(tr);
+					return this.exeRetryOnFailureMode(tr);
 				} else if (exeMode == TRANS_EXE_MODE.after_success) {
-					this.exeQueryMode(tr);
+					this.exeQueryOrNextAfterSuccessMode(tr);
 					return null;
 				} else {
 					throw new EtfRobErr4InvalidTransType(
@@ -120,7 +120,7 @@ public abstract class EtfRobustTxTemplate<T_etf_rob_trans_enum extends Enum<T_et
 		}
 	}
 
-	private void exeQueryMode(EtfRobTxRecord tr) {
+	private void exeQueryOrNextAfterSuccessMode(EtfRobTxRecord tr) {
 		String currRobTxDisplayName = getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId());
 		if (tr.getQueryTransSuccess() != null && tr.getQueryTransSuccess()) {
 			String error = currRobTxDisplayName + " 已经查询交易结果成功，不应继续轮询交易结果！";
@@ -197,7 +197,7 @@ public abstract class EtfRobustTxTemplate<T_etf_rob_trans_enum extends Enum<T_et
 				&& tr.getQueryCount().intValue() >= EtfRobAop.getCurrEtfApiAnn().queryMaxTimes();
 	}
 
-	private T_return exeRetryMode(EtfRobTxRecord tr) {
+	private T_return exeRetryOnFailureMode(EtfRobTxRecord tr) {
 		String currRobTxDisplayName = getCurrRobTxDisplayName(currEtfRobTxEnumValue, tr.getBizId());
 		if (tr.getTransSuccess() != null && tr.getTransSuccess()) {
 			String error = currRobTxDisplayName + "已经执行成功，不应继续重试";

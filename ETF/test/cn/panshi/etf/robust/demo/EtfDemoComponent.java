@@ -5,11 +5,11 @@ import javax.annotation.Resource;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
-import cn.panshi.etf.robust.EtfRobustTx;
 import cn.panshi.etf.robust.EtfRobDaoRedis;
 import cn.panshi.etf.robust.EtfRobErr4MaxQueryTimes;
 import cn.panshi.etf.robust.EtfRobErr4TransNeedRetry;
 import cn.panshi.etf.robust.EtfRobErr4TransQueryReturnFailureResult;
+import cn.panshi.etf.robust.EtfRobustTx;
 import cn.panshi.etf.robust.EtfRobustTxTemplateRedis;
 
 @Component
@@ -178,7 +178,7 @@ public class EtfDemoComponent {
 
 			@Override
 			protected void defineBizOfRetryOnFailure(String retryTimerKey, Integer retryCount) {
-				throw new RuntimeException("第" + retryCount + "次重试" + retryTimerKey + "仍然失败");
+				throw new RuntimeException("第" + retryCount + "次重试" + retryTimerKey + "失败");
 			}
 
 			@Override
