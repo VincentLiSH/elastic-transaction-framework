@@ -40,7 +40,7 @@ public class EtfDemoComponent2 {
 			}
 
 			@Override
-			protected void defineBizOfRetryBizOnFailure(String retryTimerKey, Integer retryCount) {
+			protected void defineBizOfRetryOnFailure(String retryTimerKey, Integer retryCount) {
 				if (retryCount.intValue() == 1) {
 					throw new RuntimeException("第一次重试 故意失败");
 				} else {

@@ -216,7 +216,7 @@ public abstract class EtfRobustTemplate<T_etf_rob_trans_enum extends Enum<T_etf_
 		T_return result = null;
 		try {
 			logger.info(currRobTxDisplayName + "开始第" + tr.getRetryCount() + "次重试");
-			defineBizOfRetryBizOnFailure(EtfRobAop.getCurrEtfTransRetryTimerKey(), tr.getRetryCount());
+			defineBizOfRetryOnFailure(EtfRobAop.getCurrEtfTransRetryTimerKey(), tr.getRetryCount());
 			logger.info(currRobTxDisplayName + "第" + tr.getRetryCount() + "次重试成功！");
 
 			result = constructReturnValue();
@@ -439,7 +439,7 @@ public abstract class EtfRobustTemplate<T_etf_rob_trans_enum extends Enum<T_etf_
 	/**
 	 * CallBack:当ETF API配置@EtfAnnTransApi retryMaxTimes>0时，需要实现此回调
 	 */
-	protected void defineBizOfRetryBizOnFailure(String retryTimerKey, Integer retryCount) {
+	protected void defineBizOfRetryOnFailure(String retryTimerKey, Integer retryCount) {
 		throw new UnsupportedOperationException("子类未实现重试逻辑！");
 	}
 }

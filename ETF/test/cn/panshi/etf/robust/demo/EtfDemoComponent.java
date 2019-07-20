@@ -66,7 +66,7 @@ public class EtfDemoComponent {
 			}
 
 			@Override
-			protected void defineBizOfRetryBizOnFailure(String retryTimerKey, Integer retryCount) {
+			protected void defineBizOfRetryOnFailure(String retryTimerKey, Integer retryCount) {
 				logger.debug("第" + retryCount + "次重试" + retryTimerKey + "一次性成功");
 				// throw new RuntimeException("第" + retryCount + "次重试" + retryTimerKey + "重试仍然失败");
 			}
@@ -131,7 +131,7 @@ public class EtfDemoComponent {
 			}
 
 			@Override
-			protected void defineBizOfRetryBizOnFailure(String retryTimerKey, Integer retryCount) {
+			protected void defineBizOfRetryOnFailure(String retryTimerKey, Integer retryCount) {
 				logger.debug("一次重试完成，需要轮询交易结果:" + etfDemoVo.getCode());
 			}
 
@@ -177,7 +177,7 @@ public class EtfDemoComponent {
 			}
 
 			@Override
-			protected void defineBizOfRetryBizOnFailure(String retryTimerKey, Integer retryCount) {
+			protected void defineBizOfRetryOnFailure(String retryTimerKey, Integer retryCount) {
 				throw new RuntimeException("第" + retryCount + "次重试" + retryTimerKey + "仍然失败");
 			}
 
