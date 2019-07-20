@@ -8,8 +8,7 @@ import java.util.Map;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
@@ -23,7 +22,7 @@ import cn.panshi.etf.robust.EtfRobDaoRedis.ETF_ROB_REDIS_KEYS;
 
 @Component
 public class EtfRobBeanUtil implements BeanPostProcessor {
-	static Logger log = LoggerFactory.getLogger(EtfRobBeanUtil.class);
+	static Logger log = Logger.getLogger(EtfRobBeanUtil.class);
 	@Resource
 	EtfRobDao etfRobDao;
 

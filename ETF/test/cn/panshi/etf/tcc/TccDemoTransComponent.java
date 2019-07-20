@@ -2,15 +2,14 @@ package cn.panshi.etf.tcc;
 
 import javax.annotation.Resource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import cn.panshi.etf.robust.EtfRobErr4LockConcurrent;
 
 @Component
 public class TccDemoTransComponent {
-	static Logger logger = LoggerFactory.getLogger(TccDemoTransComponent.class);
+	static Logger logger = Logger.getLogger(TccDemoTransComponent.class);
 	@Resource
 	EtfTccDaoRedis etfTccDaoRedis;
 
