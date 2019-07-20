@@ -30,6 +30,12 @@ public class EtfRobBeanUtil implements BeanPostProcessor {
 
 	Map<String, Method> etpTransBeanMethodMap = new HashMap<>();
 
+	EtfRobTxBackupInterface etfRobTxBackupImpl;
+
+	public EtfRobTxBackupInterface getEtfRobTxBackupImpl() {
+		return etfRobTxBackupImpl;
+	}
+
 	@Override
 	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
 		return bean;
@@ -37,6 +43,11 @@ public class EtfRobBeanUtil implements BeanPostProcessor {
 
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+		if (EtfRobTxBackupInterface.class.isAssignableFrom(bean.getClass())) {
+			etfRobTxBackupImpl = (EtfRobTxBackupInterface) bean;
+			return bean;
+		}
+
 		Map<String, Object> etfBeanMethodMap = new HashMap<>();
 		Method[] methods = ReflectionUtils.getAllDeclaredMethods(bean.getClass());
 		if (methods != null) {

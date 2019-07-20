@@ -16,6 +16,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.stereotype.Component;
 
+import com.alibaba.fastjson.JSONObject;
+
 import cn.panshi.etf.robust.EtfRobTxRecordLog.TRANS_EXE_MODE;
 
 @Component
@@ -24,6 +26,8 @@ public class EtfRobDaoRedis implements EtfRobDao {
 	static Logger logger = Logger.getLogger(EtfRobDaoRedis.class);
 	@Resource
 	RedisTemplate redisTemplate;
+	@Resource
+	EtfRobBeanUtil etfRobBeanUtil;
 
 	public enum ETF_ROB_REDIS_KEYS {
 		/**
@@ -113,7 +117,6 @@ public class EtfRobDaoRedis implements EtfRobDao {
 	}
 
 	private void log4TxSummaryOnCompleteThenExpire(String key, EtfRobTxRecord tr) {
-		int ttlSeconds = 3600 * 1;
 
 		String summary = "Tx[" + key + "]'s lifecycle ended with " + (tr.getTransSuccess() ? "success:)" : "failure!");
 
@@ -124,9 +127,18 @@ public class EtfRobDaoRedis implements EtfRobDao {
 		if (tr.getQueryTransSuccess() != null) {
 			summary += "And then do transQueryOrNext " + (tr.getQueryTransSuccess() ? "success:)" : "failure!");
 		}
-		logger.debug(summary);
 
-		redisTemplate.expire(key, ttlSeconds, TimeUnit.SECONDS);
+		if (etfRobBeanUtil.getEtfRobTxBackupImpl() != null) {
+			etfRobBeanUtil.getEtfRobTxBackupImpl().doBackUp(tr);
+			int ttlSeconds = 300;
+			redisTemplate.expire(key, ttlSeconds, TimeUnit.SECONDS);
+			logger.debug("当前spring容器存在EtfRobTxBackupInterface交易备份组件，设置" + ttlSeconds + "秒过期时间");
+		} else {
+			logger.debug(summary + "\n>>>print tx detail before destroy:\n" + JSONObject.toJSONString(tr));
+			int ttlSeconds = 3600;
+			redisTemplate.expire(key, ttlSeconds, TimeUnit.SECONDS);
+			logger.debug("当前spring容器不存在EtfRobTxBackupInterface交易备份组件，设置" + ttlSeconds + "秒过期时间");
+		}
 	}
 
 	protected String calcEtfTransRecordKey(String robTxEnumClazzName, String robTxEnumValueName, String bizId) {
