@@ -13,7 +13,7 @@ import com.alibaba.fastjson.JSONObject;
 import cn.panshi.etf4j.robust.EtfRobTxRecordLog.TRANS_EXE_MODE;
 
 /**
- * ETF——Elastic Transaction Framework，通过（为那些无法享受ACID事务的交易）提供以下4个机制，来保证非ACID交易的可靠执行和最终一致性：
+ * ETF4J是Elastic Transaction Framework弹性事务框架的Java版，通过（为那些无法享受ACID事务的交易）提供以下4个机制，来保证非ACID交易的可靠执行和最终一致性：
  * <li> 1 AntiDuplication幂等/防重复交易:判断同一交易同一业务流水 如果之前已经执行成功，直接返回结果</li>
  * <li> 2 LockConcurrent交易锁并发控制：同一交易（交易类型+业物流水号）不允许并发执行</li>
  * <li> 3 FailureRetry失败重试：交易执行失败时(只有在抛出EtfRetriableException情况下) 记录重试标记和重试规则（最大重试次数、重试时间间隔）；重试失败后 更新已重试次数；</li>
