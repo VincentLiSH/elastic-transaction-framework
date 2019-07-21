@@ -212,7 +212,7 @@ public void tccStep1(TccDemoVo vo) {
 			}                                                           
 		}.executeEtfTcc();                                              
 	} catch (EtfException4LockConcurrent e) {                           
-		e.printStackTrace();                                            
+		logger.error(e.getMessage());                                          
 	}                                                                   
 }                                                                       
                                                                         
@@ -242,7 +242,7 @@ public void tccStep2(TccDemoVo vo) {
 			}                                                           
 		}.executeEtfTcc();                                              
 	} catch (EtfException4LockConcurrent e) {                           
-		e.printStackTrace();                                            
+		logger.error(e.getMessage());                                             
 	}                                                                   
 }                                                                       
 ``` 
