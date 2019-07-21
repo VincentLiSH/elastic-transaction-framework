@@ -7,13 +7,12 @@
 	<property name="build.debug" value="on" />
 	<property name="build.dir" value="${basedir}/build" />
 	<property name="classes.dir" value="${build.dir}/classes" />
-	<property name="web.dir" value="WebContent" />
 	<property name="test.dir" value="build/test" />
 
 	<ivy:settings file="ivysettings.xml" />
 
 	<target name="help">
-		<echo message="~~~~~~~~~~~~~~构建命令说明~~~~~~~~~~~~~~" />
+		<echo message="~~~~~~~~~~~~~~build commands~~~~~~~~~~~~~~" />
 		<echo message="clean" />
 		<echo message="test" />
 		<echo message="jar" />
@@ -36,14 +35,6 @@
 	<target name="ivy-report" depends="resolve" description="-- resolve and retrieve dependencies with ivy">
 		<ivy:report />
 	</target>
-
-	<property environment="env" />
-	<path id="svnant.classpath">
-		<pathelement location="${env.ANT_HOME}/lib" />
-		<fileset dir="${env.ANT_HOME}/lib/">
-			<include name="svnant.jar" />
-		</fileset>
-	</path>
 
 	<target name="compile" depends="resolve">
 		<mkdir dir="${classes.dir}" />
@@ -91,19 +82,6 @@
 			<mapping conf="runtime" scope="runtime" />
 		</ivy:makepom>
 		<copy file="dist/${ant.project.name}.pom" tofile="pom.xml" overwrite="true" />
-	</target>
-
-	<target name="publish-releases" depends="jar,gen-pom">
-		<property name="revision" value="${publish.version}" />
-		<ivy:publish artifactspattern="dist/[artifact].[ext]" resolver="releases" pubrevision="${publish.version}" status="release" update="true" overwrite="true" forcedeliver="true">
-		</ivy:publish>
-		<echo message="released with version ${publish.version}" />
-	</target>
-
-	<target name="publish-snapshots" depends="jar">
-		<property name="revision" value="${publish.version}" />
-		<ivy:publish artifactspattern="dist/[artifact].[ext]" resolver="snapshots" pubrevision="${publish.version}-SNAPSHOT" status="release" update="true" overwrite="true" forcedeliver="true" />
-		<echo message="released with version ${publish.version}" />
 	</target>
 
 	<target name="clean" description="--> clean the project">
