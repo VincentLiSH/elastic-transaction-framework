@@ -1,0 +1,92 @@
+<project name="etf4j" default="help" xmlns:ivy="antlib:org.apache.ivy.ant">
+	<!--ivy properties used -->
+	<property name="publish.version" value="0.1" />
+	<property name="ivy.report.todir" value="build" />
+	<property name="ivy.pom.version" value="${publish.version}" />
+
+	<property name="build.debug" value="on" />
+	<property name="build.dir" value="${basedir}/build" />
+	<property name="classes.dir" value="${build.dir}/classes" />
+	<property name="test.dir" value="build/test" />
+
+	<ivy:settings file="ivysettings.xml" />
+
+	<target name="help">
+		<echo message="~~~~~~~~~~~~~~build commands~~~~~~~~~~~~~~" />
+		<echo message="test" />
+		<echo message="jar" />
+		<echo message="publish-releases" />
+		<echo message="publish-snapshots" />
+	</target>
+
+	<target name="resolve" description="-- parse ivy.xml">
+		<ivy:resolve file="ivy.xml" conf="*" useCacheOnly="true" />
+		<ivy:cachepath pathid="ivy.libs.compile" type="jar,bundle" conf="compile,provided" />
+		<ivy:cachepath pathid="ivy.libs.test" type="jar,bundle" conf="test,provided" />
+		<ivy:cachepath pathid="ivy.libs.runtime" type="jar,bundle" conf="runtime" />
+	</target>
+
+	<target name="ivy-download" description="-- parse ivy.xml">
+		<ivy:resolve file="ivy.xml" conf="*" useCacheOnly="false" />
+		<ivy:cachepath pathid="ivy.libs.compile" type="jar,bundle" conf="compile,provided" />
+		<ivy:cachepath pathid="ivy.libs.test" type="jar,bundle" conf="test,provided" />
+		<ivy:cachepath pathid="ivy.libs.runtime" type="jar,bundle" conf="runtime" />
+	</target>
+
+	<target name="ivy-report" depends="resolve" description="-- resolve and retrieve dependencies with ivy">
+		<ivy:report />
+	</target>
+
+	<target name="compile" depends="resolve">
+		<mkdir dir="${classes.dir}" />
+		<javac target="1.8" source="1.8" encoding="utf-8" srcdir="src/main/java" destdir="${classes.dir}" debug="${build.debug}" includeantruntime="false">
+			<compilerarg value="-Xlint:unchecked" />
+			<classpath>
+				<path refid="ivy.libs.compile" />
+				<path refid="ivy.libs.test" />
+			</classpath>
+		</javac>
+		<copy todir="${classes.dir}">
+			<fileset dir="src">
+				<exclude name="**/*.java" />
+				<exclude name="**/*.properties" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="jar" depends="compile" description="-- make a jar file for this project">
+		<mkdir dir="dist" />
+		<tstamp>
+			<format property="jar.time" pattern="yyyy-MM-dd hh:mm aa" locale="en" />
+		</tstamp>
+		<buildnumber />
+		<jar destfile="dist/${ant.project.name}.jar">
+			<manifest>
+				<attribute name="Build-Version" value="${publish.version}" />
+				<attribute name="Build-On" value="${jar.time}" />
+				<attribute name="Build-Number" value="${build.number}" />
+			</manifest>
+			<fileset dir="${classes.dir}" defaultexcludes="true">
+				<include name="**/*.class" />
+			</fileset>
+		</jar>
+		<copy file="pom.xml" tofile="dist/${ant.project.name}.pom" overwrite="true" />
+	</target>
+
+	<target name="clean" description="--> clean the project">
+		<delete dir="${build.dir}" />
+	</target>
+
+	<target name="publish-releases" depends="jar">
+		<property name="revision" value="${publish.version}" />
+		<ivy:publish artifactspattern="dist/[artifact].[ext]" resolver="releases" pubrevision="${publish.version}" status="release" update="true" overwrite="true" forcedeliver="true">
+		</ivy:publish>
+		<echo message="released with version ${publish.version}" />
+	</target>
+
+	<target name="publish-snapshots" depends="jar">
+		<property name="revision" value="${publish.version}" />
+		<ivy:publish artifactspattern="dist/[artifact].[ext]" resolver="snapshots" pubrevision="${publish.version}-SNAPSHOT" status="release" update="true" overwrite="true" forcedeliver="true" />
+		<echo message="released with version ${publish.version}" />
+	</target>
+</project>
