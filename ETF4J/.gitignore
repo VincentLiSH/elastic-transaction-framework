@@ -2,3 +2,5 @@
 /build.number
 /build/
 /dist/
+/.classpath
+/.settings/
