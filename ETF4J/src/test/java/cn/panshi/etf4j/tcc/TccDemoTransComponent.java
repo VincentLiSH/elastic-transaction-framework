@@ -26,13 +26,13 @@ public class TccDemoTransComponent {
 				@Override
 				protected void tccTry() {
 					logger.debug("step1 try..." + vo.getCode());
-					throw new RuntimeException("step1 try 失败");
+					//throw new RuntimeException("step1 try 失败");
 				}
 
 				@Override
 				protected void tccConfirm() {
 					logger.debug("confirm1..." + vo.getCode());
-					throw new RuntimeException("step1 confirm 失败");
+					//throw new RuntimeException("step1 confirm 失败");
 				}
 
 				@Override
@@ -62,7 +62,7 @@ public class TccDemoTransComponent {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
 					}
-					throw new RuntimeException("step2 try 失败");
+					//throw new RuntimeException("step2 try 失败");
 				}
 
 				@Override

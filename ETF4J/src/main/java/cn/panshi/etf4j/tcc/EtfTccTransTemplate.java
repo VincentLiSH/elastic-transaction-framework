@@ -80,7 +80,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 			String key = etfTccDao.popTccCancelCountorListOnFinished(tccEnumClazzName, tccTransBizId);
 			if (key == null) {
 				logger.debug("popTccCancelListOnCancelFinished返回null，表明当前所有TCC交易都已经cancel完成，可以标记整个交易canceled");
-				etfTccDao.updateTccCanceled(tccEnumClazzName, tccTransBizId);
+				etfTccDao.pushTccCanceledList(tccEnumClazzName, tccTransBizId);
 			}
 		} catch (Exception e) {
 			logger.error("TCC[" + getCurrEtfTransExeKey() + "]cancel失败" + e.getMessage(), e);
@@ -97,7 +97,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 			String key = etfTccDao.popTccConfirmCountorListOnSuccess(tccEnumClazzName, tccTransBizId);
 			if (key == null) {
 				logger.debug("popTccConfirmListOnSuccess返回null，表明当前所有TCC交易都已经confirm完成，可以标记整个交易success");
-				etfTccDao.updateTccSuccess(tccEnumClazzName, tccTransBizId);
+				etfTccDao.pushTccSuccessList(tccEnumClazzName, tccTransBizId);
 			}
 		} catch (Exception e) {
 			logger.error("TCC[" + getCurrEtfTransExeKey() + "]confirm失败" + e.getMessage(), e);
@@ -119,6 +119,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
+			etfTccDao.updateTccErrorDetail(tccTransBizId, transTypeEnumClazz, transTypeEnumValue, e);
 			etfTccDao.popTccTransListAndFlagTccFailure(tccTransBizId, transTypeEnumClazz, transTypeEnumValue);
 		} finally {
 

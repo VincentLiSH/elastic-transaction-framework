@@ -96,7 +96,7 @@ public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum
 			}
 
 			JSONObject inputParam = TCC_CURR_INPUT_PARAM.get();
-			etfTccDao.saveEtfTccStep(_tccEnumClass.getName(), _bizId, _tccEnumStringValue,
+			etfTccDao.saveNewEtfTccStep(_tccEnumClass.getName(), _bizId, _tccEnumStringValue,
 					inputParam == null ? null : inputParam.toJSONString());
 
 			logger.debug("TCC交易[" + _tccEnumClass.getName() + "." + _tccEnumStringValue + "]准备成功");
