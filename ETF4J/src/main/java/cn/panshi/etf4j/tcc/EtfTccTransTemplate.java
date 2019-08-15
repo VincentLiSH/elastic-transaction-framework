@@ -50,6 +50,8 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 				} else if (stage == TCC_TRANS_STAGE.tcc_cancel) {
 					this.exeTccCancel();
 				}
+			} catch (Exception e) {
+				logger.error(e.getMessage(), e);
 			} finally {
 				if (lockSuccess) {
 					Long unlock = etfLock.unlock();

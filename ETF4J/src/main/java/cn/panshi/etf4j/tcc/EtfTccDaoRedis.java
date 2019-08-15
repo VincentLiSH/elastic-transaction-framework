@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 
+import cn.panshi.etf4j.RedisUtil;
 import cn.panshi.etf4j.robust.EtfAbstractRedisLockTemplate;
 import cn.panshi.etf4j.tcc.EtfTccTransTemplate.TCC_TRANS_STAGE;
 
@@ -134,10 +135,12 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		String tccTryListKey = calcTccCountor4TryKey(tccEnumClazzName, tccTransBizId);
 		String tccFailureFlagListKey = this.calcTccFailureFlagListKey(tccEnumClazzName, tccTransBizId);
 
-		Object result = redisTemplate.opsForList().rightPopAndLeftPush(tccTryListKey, tccFailureFlagListKey);
+		Object result = RedisUtil.rightPopAndLeftPush(redisTemplate, tccTryListKey, tccFailureFlagListKey,
+				transTypeEnumValue); //redisTemplate.opsForList().rightPopAndLeftPush();
+		logger.info("TCC交易[" + tccEnumClazzName + "#" + tccTransBizId + "]try失败，标记在" + tccFailureFlagListKey);
 		if (result == null) {
-			logger.info("最后一个try失败，需要触发所有相关交易cancel");
-
+			logger.info("最后一个步骤try失败，直接触发整个交易cancel");
+			//redisTemplate.opsForList().leftPush(tccFailureFlagListKey, transTypeEnumValue);
 			triggerTccCancel(tccTransBizId, tccEnumClazzName);
 		}
 
@@ -155,11 +158,13 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	@Override
 	public void triggerTccConfirmOrCancel(String tccTransBizId, String tccEnumClazzName) {
 		String failureFlagListKey = this.calcTccFailureFlagListKey(tccEnumClazzName, tccTransBizId);
-		Object failureStep = redisTemplate.opsForList().leftPop(failureFlagListKey);
-		if (failureStep != null) {
-			logger.info("TCC交易[" + tccEnumClazzName + "#" + tccTransBizId + "]try阶段存在failure step，触发整个交易撤销！");
+		Object failureListSize = redisTemplate.opsForList().size(failureFlagListKey);
+		if (failureListSize != null) {
+			logger.info("TCC交易[" + tccEnumClazzName + "#" + tccTransBizId + "]最后一个step完成try阶段，存在failure["
+					+ "failureListSize" + "个]，开始触发整个交易撤销...");
 			triggerTccCancel(tccTransBizId, tccEnumClazzName);
 		} else {
+			logger.info("TCC交易[" + tccEnumClazzName + "#" + tccTransBizId + "]最后一个step完成try阶段，没有任何异常，开始触发整个交易确认...");
 			triggerTccConfirm(tccTransBizId, tccEnumClazzName);
 		}
 	}

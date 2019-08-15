@@ -6,9 +6,6 @@ import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import cn.panshi.etf4j.robust.EtfRobErr4LockConcurrent;
-import cn.panshi.etf4j.tcc.EtfTcc;
-import cn.panshi.etf4j.tcc.EtfTccDaoRedis;
-import cn.panshi.etf4j.tcc.EtfTccTransTemplate;
 
 @Component
 public class TccDemoTransComponent {
@@ -29,7 +26,7 @@ public class TccDemoTransComponent {
 				@Override
 				protected void tccTry() {
 					logger.debug("step1 try..." + vo.getCode());
-					//					throw new RuntimeException("step1 try 失败");
+					throw new RuntimeException("step1 try 失败");
 				}
 
 				@Override
@@ -61,6 +58,11 @@ public class TccDemoTransComponent {
 				@Override
 				protected void tccTry() {
 					logger.debug("try2..." + vo.getCode());
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+					}
+					throw new RuntimeException("step2 try 失败");
 				}
 
 				@Override

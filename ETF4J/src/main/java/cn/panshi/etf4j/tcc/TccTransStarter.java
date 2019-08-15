@@ -32,69 +32,74 @@ public class TccTransStarter<T_tcc_trans_enum_type extends Enum<T_tcc_trans_enum
 		this.etfTccDao = etfTccDao;
 	}
 
+	/**
+	 * 对ps所包裹的TCC交易步骤做一系列执行前的准备工作：
+	 * 1 检查其交易类型合法性（enum value合法性、与其它步骤是否存在冲突、重复等）；
+	 * 2 获取其对应的bizId交易流水号；
+	 * 3 获取该TCC交易步骤的调用入参；
+	 * 4 将此交易步骤调用4要素（_tccEnumClass.getName(), _bizId, _tccEnumStringValue,inputParam）存入redis，用于后续的启动和交易回调；
+	 * 
+	 * @param ps 相当于一个闭包——包裹了对1个TCC交易步骤的调用
+	 */
 	public final void prepareTccTrans(TccTransPrepareStatement ps) throws EtfTccException4PrepareStage {
 		try {
 			EtfTccAop.setTccCurrStagePrepare();
 
-			String bizId = invokePrepare2GetBizId(ps);
+			String _bizId = invokePrepare2GetBizId(ps);
 
-			Class<? extends Enum> tccEnumType = TCC_ENUM_TYPE_OF_JUST_PREPARED_TRANS.get();
-			String tccEnumValue = TCC_ENUM_VALUE_OF_JUST_PREPARED_TRANS.get();
-			if (tccEnumType == null || tccEnumValue == null) {
+			Class<? extends Enum> _tccEnumClass = TCC_ENUM_TYPE_OF_JUST_PREPARED_TRANS.get();
+			String _tccEnumStringValue = TCC_ENUM_VALUE_OF_JUST_PREPARED_TRANS.get();
+
+			if (_tccEnumClass == null || _tccEnumStringValue == null) {
 				throw new EtfTccException4PrepareStage("未检测到交易类型上下文，请确保TCC交易API正确配置了@EtfTcc");
 			}
 
-			T_tcc_trans_enum_type tccEnumTypeJustPrepared = null;
+			T_tcc_trans_enum_type _tccEnumValue = null;
 			try {
-				tccEnumTypeJustPrepared = (T_tcc_trans_enum_type) Enum.valueOf(tccEnumType, tccEnumValue);
-
+				_tccEnumValue = (T_tcc_trans_enum_type) Enum.valueOf(_tccEnumClass, _tccEnumStringValue);
 			} catch (Exception e) {
-				throw new EtfTccException4PrepareStage("准备启动的事务类型[" + tccEnumValue + "]不是一个合法的" + tccEnumType.getName()
-						+ "枚举值，请确保TCC交易API正确配置了@EtfTcc！");
-			}
-
-			if (tccEnumTypeJustPrepared == null) {
-				throw new EtfTccException4PrepareStage("准备启动的事务类型[" + tccEnumValue + "]不是一个合法的" + tccEnumType.getName()
-						+ "枚举值，请确保TCC交易API正确配置了@EtfTcc！");
+				throw new EtfTccException4PrepareStage("准备启动的事务类型[" + _tccEnumStringValue + "]不是一个合法的"
+						+ _tccEnumClass.getName() + "枚举值，请确保TCC交易API正确配置了@EtfTcc！");
 			}
 
 			if (tccTransEnumClass == null) {
-				tccTransEnumClass = (Class<? extends Enum<T_tcc_trans_enum_type>>) tccEnumTypeJustPrepared.getClass();
+				tccTransEnumClass = (Class<? extends Enum<T_tcc_trans_enum_type>>) _tccEnumValue.getClass();
 			}
 
-			if (!tccEnumType.equals(tccEnumTypeJustPrepared.getClass())) {
-				throw new EtfTccException4PrepareStage("Tcc事务启动器的交易类型[" + tccEnumType.getName() + "]与准备启动的事务类型["
-						+ tccEnumTypeJustPrepared.getClass().getName() + "]不符，请确保TCC交易API正确配置了@EtfTcc！");
+			if (!tccTransEnumClass.equals(_tccEnumValue.getClass())) {
+				throw new EtfTccException4PrepareStage("Tcc事务启动器的交易类型[" + tccTransEnumClass.getName() + "]与准备启动的事务类型["
+						+ _tccEnumValue.getClass().getName() + "]不符，请确保TccTransStarter准备的多个TCC交易类型一致！");
 			}
 
-			if (StringUtils.isBlank(bizId)) {
-				throw new EtfTccException4PrepareStage(
-						"TCC交易[" + tccEnumType.getName() + "." + tccEnumValue + "]准备阶段未返回bizId业务流水号，请确保正确实现了TCC交易回调！");
+			if (StringUtils.isBlank(_bizId)) {
+				throw new EtfTccException4PrepareStage("TCC交易[" + _tccEnumClass.getName() + "." + _tccEnumStringValue
+						+ "]准备阶段返回了空的bizId业务流水号，请确保正确实现了TCC交易回调！");
 			}
 			if (tccTransBizId == null) {
-				tccTransBizId = bizId;
+				tccTransBizId = _bizId;
 			} else {
-				if (!StringUtils.equals(tccTransBizId, bizId)) {
-					throw new EtfTccException4PrepareStage("TCC交易[" + tccEnumType.getName() + "." + tccEnumValue
-							+ "]准备阶段返回bizId业务流水号" + bizId + "与前面交易准备返回的[" + tccTransBizId + "]不一致，请确保正确实现了TCC交易回调！");
+				if (!StringUtils.equals(tccTransBizId, _bizId)) {
+					throw new EtfTccException4PrepareStage(
+							"TCC交易[" + _tccEnumClass.getName() + "." + _tccEnumStringValue + "]准备阶段返回bizId业务流水号"
+									+ _bizId + "与前面交易准备返回的[" + tccTransBizId + "]不一致，请确保正确实现了TCC交易回调！");
 				}
 			}
 
-			if (tccTransStepSet.contains(tccEnumValue)) {
-				throw new EtfTccException4PrepareStage("TCC交易[" + tccEnumType.getName() + "." + tccEnumValue
-						+ "]准备失败，请确保TCC交易API正确配置了@EtfTcc，不存在重复类型！");
+			if (tccTransStepSet.contains(_tccEnumStringValue)) {
+				throw new EtfTccException4PrepareStage("TCC交易[" + _tccEnumClass.getName() + "." + _tccEnumStringValue
+						+ "]准备失败，请确保TccTransStarter准备的多个TCC交易不存在重复类型！");
 			} else {
-				tccTransStepSet.add(tccEnumValue);
+				tccTransStepSet.add(_tccEnumStringValue);
 				if (tccTransStepSet.size() == 1) {
-					etfTccDao.initTccCounter4Try(tccEnumType.getName(), bizId);
+					etfTccDao.initTccCounter4Try(_tccEnumClass.getName(), _bizId);
 				}
 			}
 
 			JSONObject inputParam = TCC_CURR_INPUT_PARAM.get();
-			etfTccDao.saveEtfTccStep(tccEnumType.getName(), bizId, tccEnumValue,
+			etfTccDao.saveEtfTccStep(_tccEnumClass.getName(), _bizId, _tccEnumStringValue,
 					inputParam == null ? null : inputParam.toJSONString());
 
-			logger.debug("TCC交易[" + tccEnumType.getName() + "." + tccEnumValue + "]准备成功");
+			logger.debug("TCC交易[" + _tccEnumClass.getName() + "." + _tccEnumStringValue + "]准备成功");
 		} finally {
 			TCC_ENUM_TYPE_OF_JUST_PREPARED_TRANS.remove();
 			TCC_ENUM_VALUE_OF_JUST_PREPARED_TRANS.remove();
