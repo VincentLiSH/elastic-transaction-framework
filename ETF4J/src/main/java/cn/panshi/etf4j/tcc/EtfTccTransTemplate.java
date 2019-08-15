@@ -114,7 +114,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 
 			String key = etfTccDao.popTccTryCountorListOnSuccess(tccTransBizId, transTypeEnumClazz);
 			if (key == null) {
-				logger.debug("popTccTransListOnTrySuccess返回null，表明当前所有TCC交易都已经try完成，可以触发confirm");
+				logger.debug("popTccTransListOnTrySuccess返回null，表明当前所有TCC交易都已经try完成，可以触发confirm或cancel了");
 				etfTccDao.triggerTccConfirmOrCancel(tccTransBizId, transTypeEnumClazz);
 			}
 		} catch (Exception e) {

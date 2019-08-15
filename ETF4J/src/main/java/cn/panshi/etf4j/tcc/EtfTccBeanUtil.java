@@ -76,6 +76,7 @@ public class EtfTccBeanUtil implements BeanPostProcessor {
 					methodParam.getType());
 		}
 		Object object = ReflectionUtils.invokeMethod(method, target, argArry2InvokeTarget);
-		System.out.println("无需输出此日志到logger，仅开发调试用。" + EtfTccBeanUtil.class.getName() + ".invokeMethod return" + object);
+		System.out.println(EtfTccBeanUtil.class.getName() + ":无需输出此日志到logger，仅开发调试用。" + EtfTccBeanUtil.class.getName()
+				+ ".invokeMethod return " + object);
 	}
 }

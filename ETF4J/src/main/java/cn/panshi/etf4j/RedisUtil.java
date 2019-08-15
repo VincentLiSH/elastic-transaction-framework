@@ -10,22 +10,22 @@ import redis.clients.jedis.JedisCluster;
 
 public class RedisUtil {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static Long rightPopAndLeftPush(RedisTemplate redisTemplate, String popList, String pushList,
+	public static Object rightPopAndLeftPush(RedisTemplate redisTemplate, String popList, String pushList,
 			String pushValue) {
-		String UNLOCK_LUA = "redis.call(\"lpush\",KEYS[2],ARGV[1])                                      "
-				+ "          return redis.call(\"rpop\",KEYS[1])                                                                         ";
-		Long result = (Long) redisTemplate.execute(new RedisCallback<Long>() {
+		String LUA = "redis.call(\"lpush\",KEYS[2],ARGV[1])               "
+				+ "          return redis.call(\"rpop\",KEYS[1])              ";
+		Object result = redisTemplate.execute(new RedisCallback<Object>() {
 			@Override
-			public Long doInRedis(RedisConnection connection) throws DataAccessException {
+			public Object doInRedis(RedisConnection connection) throws DataAccessException {
 				Object nativeConnection = connection.getNativeConnection();
 				if (nativeConnection instanceof JedisCluster) {
-					return (Long) ((JedisCluster) nativeConnection).eval(UNLOCK_LUA, 2, popList, pushList, pushValue);
+					return ((JedisCluster) nativeConnection).eval(LUA, 2, popList, pushList, "\"" + pushValue + "\"");
 				}
 
 				else if (nativeConnection instanceof Jedis) {
-					return (Long) ((Jedis) nativeConnection).eval(UNLOCK_LUA, 2, popList, pushList, pushValue);
+					return ((Jedis) nativeConnection).eval(LUA, 2, popList, pushList, "\"" + pushValue + "\"");
 				}
-				return 0L;
+				throw new RuntimeException("unsupported nativeConnection " + nativeConnection.getClass());
 			}
 		});
 		return result;

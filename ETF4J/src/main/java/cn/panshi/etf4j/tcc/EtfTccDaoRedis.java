@@ -157,11 +157,10 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 	@Override
 	public void triggerTccConfirmOrCancel(String tccTransBizId, String tccEnumClazzName) {
-		String failureFlagListKey = this.calcTccFailureFlagListKey(tccEnumClazzName, tccTransBizId);
-		Object failureListSize = redisTemplate.opsForList().size(failureFlagListKey);
-		if (failureListSize != null) {
-			logger.info("TCC交易[" + tccEnumClazzName + "#" + tccTransBizId + "]最后一个step完成try阶段，存在failure["
-					+ "failureListSize" + "个]，开始触发整个交易撤销...");
+		List failureList = queryFailureFlagList(tccTransBizId, tccEnumClazzName);
+		if (failureList != null) {
+			logger.info("TCC交易[" + tccEnumClazzName + "#" + tccTransBizId + "]最后一个step完成try，存在failure["
+					+ failureList.size() + "个]，开始触发整个交易撤销...");
 			triggerTccCancel(tccTransBizId, tccEnumClazzName);
 		} else {
 			logger.info("TCC交易[" + tccEnumClazzName + "#" + tccTransBizId + "]最后一个step完成try阶段，没有任何异常，开始触发整个交易确认...");
@@ -213,10 +212,23 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	private void triggerTccCancel(String tccTransBizId, String tccEnumClazzName) {
 		logger.debug("Triggering TCC[" + tccEnumClazzName + "#" + tccTransBizId + "] to cancel...");
 
+		List failureList = queryFailureFlagList(tccTransBizId, tccEnumClazzName);
+
 		List<EtfTccStep> trStepList = queryTccRecordStepList(tccEnumClazzName, tccTransBizId);
-		logger.debug("查找到需要cancel的TCC[" + tccEnumClazzName + "#" + tccTransBizId + "] step" + trStepList.size() + "个");
-		this.initTccCounter4Cancel(tccEnumClazzName, tccTransBizId, trStepList.size() - 1);
+
+		logger.debug("TCC[" + tccEnumClazzName + "#" + tccTransBizId + "]包含[" + trStepList.size()
+				+ "]个step,try阶段已经failure的step[" + failureList.size() + "]个");
+		if (trStepList.size() <= failureList.size()) {
+			logger.info("所有step都try failure，无需cancel，直接返回！");
+			return;
+		}
+
+		this.initTccCounter4Cancel(tccEnumClazzName, tccTransBizId, (trStepList.size() - failureList.size() - 1));
+
 		for (EtfTccStep step : trStepList) {
+			if (failureList.contains(step.getTccEnumValue())) {
+				continue;
+			}
 			executor.submit(new Runnable() {
 				@Override
 				public void run() {
@@ -229,6 +241,11 @@ public class EtfTccDaoRedis implements EtfTccDao {
 				}
 			});
 		}
+	}
+
+	protected List queryFailureFlagList(String tccTransBizId, String tccEnumClazzName) {
+		String failureFlagListKey = this.calcTccFailureFlagListKey(tccEnumClazzName, tccTransBizId);
+		return redisTemplate.opsForList().range(failureFlagListKey, 0, -1);
 	}
 
 	private void initTccCounter4Cancel(String tccEnumClazzName, String tccTransBizId, int countorInitValue) {
