@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 
-import cn.panshi.etf4j.RedisUtil;
-import cn.panshi.etf4j.robust.EtfAbstractRedisLockTemplate;
+import cn.panshi.etf4j.redis.EtfAbstractRedisLockTemplate;
+import cn.panshi.etf4j.redis.RedisUtil;
 import cn.panshi.etf4j.tcc.EtfTccTransTemplate.TCC_TRANS_STAGE;
 
 @Component

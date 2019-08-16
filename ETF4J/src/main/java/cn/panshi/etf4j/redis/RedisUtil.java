@@ -1,4 +1,4 @@
-package cn.panshi.etf4j;
+package cn.panshi.etf4j.redis;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;

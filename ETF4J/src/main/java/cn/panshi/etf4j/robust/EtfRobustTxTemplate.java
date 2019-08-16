@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 
 import com.alibaba.fastjson.JSONObject;
 
+import cn.panshi.etf4j.redis.EtfAbstractRedisLockTemplate;
 import cn.panshi.etf4j.robust.EtfRobTxRecordLog.TRANS_EXE_MODE;
 
 /**

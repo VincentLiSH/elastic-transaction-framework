@@ -4,7 +4,7 @@ import java.lang.reflect.ParameterizedType;
 
 import org.apache.log4j.Logger;
 
-import cn.panshi.etf4j.robust.EtfAbstractRedisLockTemplate;
+import cn.panshi.etf4j.redis.EtfAbstractRedisLockTemplate;
 import cn.panshi.etf4j.robust.EtfRobErr4LockConcurrent;
 
 @SuppressWarnings("unchecked")

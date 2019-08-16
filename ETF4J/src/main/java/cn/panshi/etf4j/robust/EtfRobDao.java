@@ -2,6 +2,8 @@ package cn.panshi.etf4j.robust;
 
 import java.util.Date;
 
+import cn.panshi.etf4j.redis.EtfAbstractRedisLockTemplate;
+
 public interface EtfRobDao {
 
 	void validateTransDuplicate(EtfRobTxRecord tr) throws EtfRobErr4TransDuplicate;

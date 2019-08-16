@@ -1,4 +1,4 @@
-package cn.panshi.etf4j.robust;
+package cn.panshi.etf4j.redis;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.dao.DataAccessException;
@@ -6,7 +6,6 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 
-import cn.panshi.etf4j.redis.IRedisNxLockProtected;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisCommands;

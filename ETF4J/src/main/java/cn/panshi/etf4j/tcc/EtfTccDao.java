@@ -1,6 +1,6 @@
 package cn.panshi.etf4j.tcc;
 
-import cn.panshi.etf4j.robust.EtfAbstractRedisLockTemplate;
+import cn.panshi.etf4j.redis.EtfAbstractRedisLockTemplate;
 
 public interface EtfTccDao {
 	final static int DEFAULT_SUCCESS_LIST_SIZE = 3000;
