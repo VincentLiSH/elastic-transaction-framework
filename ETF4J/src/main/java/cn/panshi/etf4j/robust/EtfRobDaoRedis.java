@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 
-import cn.panshi.etf4j.redis.EtfAbstractRedisLockTemplate;
+import cn.panshi.etf4j.redis.AbstractRedisLockTemplate;
 import cn.panshi.etf4j.robust.EtfRobTxRecordLog.TRANS_EXE_MODE;
 
 @Component
@@ -76,9 +76,9 @@ public class EtfRobDaoRedis implements EtfRobDao {
 	}
 
 	@Override
-	public EtfAbstractRedisLockTemplate getEtfConcurrentLock(String robTxEnumClazzName, String robTxEnumValueName,
+	public AbstractRedisLockTemplate getEtfConcurrentLock(String robTxEnumClazzName, String robTxEnumValueName,
 			String bizId, int expireSeconds) {
-		return new EtfAbstractRedisLockTemplate(redisTemplate, expireSeconds, UUID.randomUUID().toString()) {
+		return new AbstractRedisLockTemplate(redisTemplate, expireSeconds, UUID.randomUUID().toString()) {
 			@Override
 			protected String constructKey() {
 				return calcEtfInvokeLockKey(robTxEnumClazzName, robTxEnumValueName, bizId);

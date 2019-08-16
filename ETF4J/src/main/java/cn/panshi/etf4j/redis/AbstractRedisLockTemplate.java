@@ -11,13 +11,13 @@ import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisCommands;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public abstract class EtfAbstractRedisLockTemplate {
+public abstract class AbstractRedisLockTemplate {
 	RedisTemplate redisTemplate;
 	int expireSeconds;
 
 	String lockToken;
 
-	public EtfAbstractRedisLockTemplate(RedisTemplate redisTemplate, int expireSeconds, String lockToken) {
+	public AbstractRedisLockTemplate(RedisTemplate redisTemplate, int expireSeconds, String lockToken) {
 		super();
 		this.redisTemplate = redisTemplate;
 		this.expireSeconds = expireSeconds;

@@ -1,6 +1,6 @@
 package cn.panshi.etf4j.tcc;
 
-import cn.panshi.etf4j.redis.EtfAbstractRedisLockTemplate;
+import cn.panshi.etf4j.redis.AbstractRedisLockTemplate;
 
 public interface EtfTccDao {
 	final static int DEFAULT_SUCCESS_LIST_SIZE = 3000;
@@ -10,7 +10,7 @@ public interface EtfTccDao {
 
 	void startTccTransAsynch(String tccTransClass, String tccTransEnumValue, String tccTransBizId);
 
-	EtfAbstractRedisLockTemplate getEtfTccConcurrentLock(int lockAutoExpireSeconds);
+	AbstractRedisLockTemplate getEtfTccConcurrentLock(int lockAutoExpireSeconds);
 
 	String popTccTryCountorListOnSuccess(String tccTransBizId, String transTypeEnumClazz);
 

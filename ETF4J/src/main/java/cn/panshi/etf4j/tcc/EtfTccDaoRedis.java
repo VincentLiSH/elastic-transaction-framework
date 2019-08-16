@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 
-import cn.panshi.etf4j.redis.EtfAbstractRedisLockTemplate;
+import cn.panshi.etf4j.redis.AbstractRedisLockTemplate;
 import cn.panshi.etf4j.redis.RedisUtil;
 import cn.panshi.etf4j.tcc.EtfTccTransTemplate.TCC_TRANS_STAGE;
 
@@ -114,8 +114,8 @@ public class EtfTccDaoRedis implements EtfTccDao {
 	}
 
 	@Override
-	public EtfAbstractRedisLockTemplate getEtfTccConcurrentLock(int lockAutoExpireSeconds) {
-		return new EtfAbstractRedisLockTemplate(redisTemplate, lockAutoExpireSeconds, UUID.randomUUID().toString()) {
+	public AbstractRedisLockTemplate getEtfTccConcurrentLock(int lockAutoExpireSeconds) {
+		return new AbstractRedisLockTemplate(redisTemplate, lockAutoExpireSeconds, UUID.randomUUID().toString()) {
 			@Override
 			protected String constructKey() {
 				TCC_TRANS_STAGE currTccStage = EtfTccAop.getCurrTccStage();

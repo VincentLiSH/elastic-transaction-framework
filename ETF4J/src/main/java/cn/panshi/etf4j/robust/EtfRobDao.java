@@ -2,7 +2,7 @@ package cn.panshi.etf4j.robust;
 
 import java.util.Date;
 
-import cn.panshi.etf4j.redis.EtfAbstractRedisLockTemplate;
+import cn.panshi.etf4j.redis.AbstractRedisLockTemplate;
 
 public interface EtfRobDao {
 
@@ -10,7 +10,7 @@ public interface EtfRobDao {
 
 	EtfRobTxRecord loadEtfTransRecord(String robTxEnumClazzName, String robTxEnumValueName, String bizId);
 
-	EtfAbstractRedisLockTemplate getEtfConcurrentLock(String robTxEnumClazzName, String robTxEnumValueName,
+	AbstractRedisLockTemplate getEtfConcurrentLock(String robTxEnumClazzName, String robTxEnumValueName,
 			String bizId, int expireSeconds);
 
 	String saveTransRecord(EtfRobTxRecord tr);

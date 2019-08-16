@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
 
 import com.alibaba.fastjson.JSONObject;
 
-import cn.panshi.etf4j.redis.EtfAbstractRedisLockTemplate;
+import cn.panshi.etf4j.redis.AbstractRedisLockTemplate;
 import cn.panshi.etf4j.robust.EtfRobTxRecordLog.TRANS_EXE_MODE;
 
 /**
@@ -75,7 +75,7 @@ public abstract class EtfRobustTxTemplate<T_etf_rob_trans_enum extends Enum<T_et
 
 		String currRobTxDisplayName = getCurrRobTxDisplayName(currEtfRobTxEnumValue, bizId);
 
-		EtfAbstractRedisLockTemplate etfLock = etfRobDao.getEtfConcurrentLock(
+		AbstractRedisLockTemplate etfLock = etfRobDao.getEtfConcurrentLock(
 				currEtfRobTxEnumValue.getClass().getName(), currEtfRobTxEnumValue.name(), bizId,
 				ETF_ROB_LOCK_DEFAULT_EXPIRE_SECONDS);
 
