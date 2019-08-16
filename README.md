@@ -100,6 +100,168 @@ TCC可撤销交易仅适用于组织内部统一架构实施，对于外部系�
 
 不难看出，这是一个“不可撤销交易”型组件，ETF为其提供了retry和query机制确保交易（在暂时出错的情况下也能尽量）执行成功。
 
+``` java
+public enum EtfDemoEnum {
+      TX_simple, TX_need_retry, TX_need_trans_query_on_success, AndThen_Invoke_Another_ETF, TX_simple_Nested;
+}
+
+@EtfRobustTx(transEnumClazz = EtfDemoEnum.class, transEnumValue = "AndThen_Invoke_Another_ETF", //           
+		queryMaxTimes = 5, queryFirstDelaySeconds = 8, queryIntervalSeconds = 60, //                            
+		retryMaxTimes = 3, retryFirstDelaySeconds = 3, retryIntervalSeconds = 5)                                
+public String doSometh_AndThen_Invoke_Another_ETF(EtfDemoVo etfDemoVo) throws Exception {                       
+                                                                                                                
+	EtfTemplateWithRedisDao<EtfDemoEnum, String> etfTemplate = new EtfTemplateWithRedisDao<EtfDemoEnum, String>(
+			etfDaoRedis) {                                                                                      
+                                                                                                                
+		@Override                                                                                               
+		protected String calcEtfBizId() {                                                                       
+			return etfDemoVo.getCode();                                                                         
+		}                                                                                                       
+                                                                                                                
+		@Override                                                                                               
+		protected void doBizWithinEtf() throws EtfException4TransNeedRetry {                                    
+			throw new EtfException4TransNeedRetry("失败 需要重试一次");                                                 
+		}                                                                                                       
+                                                                                                                
+		@Override                                                                                               
+		protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {                                 
+			logger.debug("一次重试完成，需要轮询交易结果:" + etfDemoVo.getCode());	                                             
+		}                                                                                                       
+                                                                                                                
+		@Override                                                                                               
+		protected String constructResult() {                                                                    
+			return "return " + etfDemoVo.getCode();                                                             
+		}                                                                                                       
+                                                                                                                
+		@Override                                                                                               
+		protected boolean doTransQueryOrNextTransByEtf(String queryTimerKey, Integer queryCount)                
+				throws EtfException4TransQueryReturnFailureResult, EtfException4MaxQueryTimes {                 
+			logger.debug("第" + queryCount + "次轮询交易结果" + queryTimerKey + "一次性成功");                               
+			try {                                                                                               
+				EtfDemoVo2 etfDemoVo2 = new EtfDemoVo2();                                                       
+				etfDemoVo2.setCode(etfDemoVo.getCode());                                                        
+				etfDemoComponent2.doSometh_Simple_By_Another_Etf(etfDemoVo2);                                   
+			} catch (Exception e) {                                                                             
+				logger.error(e.getMessage());                                                                   
+			}                                                                                                   
+			return true;                                                                                        
+		}                                                                                                       
+	};                                                                                                          
+	return etfTemplate.executeEtfTransaction();                                                                 
+}                                                                                                               
+```
+再贴一段“TCC可撤销型交易”组件示例代码：
+``` java
+public enum TccDemoEnum {
+	step1, step2;
+}
+
+@Resource                                                                                    
+TccDemoTransComponent tccDemoTransComponent;                                                 
+                                                                                             
+@Resource                                                                                    
+EtfTccDaoRedis etfTccDaoRedis;                                                               
+                                                                                             
+public void startTccFlow1() throws EtfTccException4PrepareStage, EtfTccException4StartStage {
+	TccDemoVo vo = new TccDemoVo();                                                          
+	vo.setCode("unit test");                                                                 
+                                                                                             
+	TccTransStarter<TccDemoEnum> starter = new TccTransStarter<TccDemoEnum>(etfTccDaoRedis); 
+                                                                                             
+	starter.prepareTccTrans(new TccTransPrepareStatement() {                                 
+		@Override                                                                            
+		public void doPrepare() {                                                            
+			tccDemoTransComponent.tccStep1(vo);                                              
+		}                                                                                    
+	});                                                                                      
+                                                                                             
+	starter.prepareTccTrans(new TccTransPrepareStatement() {                                 
+		@Override                                                                            
+		public void doPrepare() {                                                            
+			tccDemoTransComponent.tccStep2(vo);                                              
+		}                                                                                    
+	});                                                                                      
+                                                                                             
+	starter.startTccTransList();                                                             
+}                                                                                            
+```
+
+``` java
+@Resource                                                               
+EtfTccDaoRedis etfTccDaoRedis;                                          
+                                                                        
+@EtfTcc(transEnumClazz = TccDemoEnum.class, transEnumValue = "step1")   
+public void tccStep1(TccDemoVo vo) {                                    
+	try {                                                               
+		new EtfTccTransTemplate<TccDemoEnum>(etfTccDaoRedis) {          
+                                                                        
+			@Override                                                   
+			protected String calcTccTransBizId() {                      
+				return vo.getCode();                                    
+			}                                                           
+                                                                        
+			@Override                                                   
+			protected void tccTry() {                                   
+				logger.debug("step1 try..." + vo.getCode());      
+				throw new RuntimeException("step1 try 失败");             
+			}                                                           
+                                                                        
+			@Override                                                   
+			protected void tccConfirm() {                               
+				logger.debug("confirm1..." + vo.getCode());       
+			}                                                           
+                                                                        
+			@Override                                                   
+			protected void tccCancel() {                                
+				logger.debug("cancel1..." + vo.getCode());        
+			}                                                           
+		}.executeEtfTcc();                                              
+	} catch (EtfException4LockConcurrent e) {                           
+		logger.error(e.getMessage());                                          
+	}                                                                   
+}                                                                       
+                                                                        
+@EtfTcc(transEnumClazz = TccDemoEnum.class, transEnumValue = "step2")   
+public void tccStep2(TccDemoVo vo) {                                    
+	try {                                                               
+		new EtfTccTransTemplate<TccDemoEnum>(etfTccDaoRedis) {          
+                                                                        
+			@Override                                                   
+			protected String calcTccTransBizId() {                      
+				return vo.getCode();                                    
+			}                                                           
+                                                                        
+			@Override                                                   
+			protected void tccTry() {                                   
+				logger.debug("try2..." + vo.getCode());           
+			}                                                           
+                                                                        
+			@Override                                                   
+			protected void tccConfirm() {                               
+				logger.debug("confirm2..." + vo.getCode());       
+			}                                                           
+                                                                        
+			@Override                                                   
+			protected void tccCancel() {                                
+				logger.debug("cancel2..." + vo.getCode());        
+			}                                                           
+		}.executeEtfTcc();                                              
+	} catch (EtfException4LockConcurrent e) {                           
+		logger.error(e.getMessage());                                             
+	}                                                                   
+}                                                                       
+``` 
+
+作为对比可以看下另一个星数很高的tcc项目，对业务组件的侵入性是什么样的:
+``` java
+@Compensable(confirmMethod = "confirmRecord", cancelMethod = "cancelRecord", transactionContextEditor = MethodTransactionContextEditor.class)
+public String record(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) ...
+
+public void confirmRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto)...
+public void cancelRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto)...
+
+```
+明确要求try方法、confirm方法和cancel方法入参类型须一样。
 
 ## ETF主要借助Redis的一些关键特性 实现了多种交易最终一致性机制
 ETF的最关键特性，目前都是严重依赖Redis的一些特性实现的：
