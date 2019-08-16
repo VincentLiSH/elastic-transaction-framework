@@ -16,17 +16,17 @@
 		<context:exclude-filter type="annotation"
 			expression="org.springframework.stereotype.Controller" />
 	</context:component-scan>
-	
+
 	<aop:aspectj-autoproxy />
 
-	<bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig">
-		<property name="maxIdle" value="${redis.maxIdle}" />
-		<property name="maxWaitMillis" value="${redis.maxWait}" />
-		<property name="testOnBorrow" value="${redis.testOnBorrow}" />
-	</bean>
-
-	<bean id="connectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
-		<constructor-arg name="poolConfig" ref="poolConfig" />
+	<bean id="jedisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+		<constructor-arg name="poolConfig">
+			<bean class="redis.clients.jedis.JedisPoolConfig">
+				<property name="maxIdle" value="${redis.maxIdle}" />
+				<property name="maxWaitMillis" value="${redis.maxWait}" />
+				<property name="testOnBorrow" value="${redis.testOnBorrow}" />
+			</bean>
+		</constructor-arg>
 		<property name="hostName" value="${redis.host}" />
 		<property name="port" value="${redis.port}" />
 		<property name="timeout" value="${redis.timeout}"></property>
@@ -35,7 +35,7 @@
 	</bean>
 
 	<bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
-		<property name="connectionFactory" ref="connectionFactory" />
+		<property name="connectionFactory" ref="jedisConnectionFactory" />
 		<property name="keySerializer">
 			<bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />
 		</property>
@@ -49,7 +49,7 @@
 			<bean class="org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer" />
 		</property>
 	</bean>
-	
+
 	<bean id="taskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
 		<property name="corePoolSize" value="5" />
 		<property name="maxPoolSize" value="10" />
