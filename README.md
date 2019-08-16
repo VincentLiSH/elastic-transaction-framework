@@ -100,56 +100,6 @@ TCC可撤销交易仅适用于组织内部统一架构实施，对于外部系�
 
 不难看出，这是一个“不可撤销交易”型组件，ETF为其提供了retry和query机制确保交易（在暂时出错的情况下也能尽量）执行成功。
 
-``` java
-public enum EtfDemoEnum {
-      TX_simple, TX_need_retry, TX_need_trans_query_on_success, AndThen_Invoke_Another_ETF, TX_simple_Nested;
-}
-
-@EtfRobustTx(transEnumClazz = EtfDemoEnum.class, transEnumValue = "AndThen_Invoke_Another_ETF", //           
-		queryMaxTimes = 5, queryFirstDelaySeconds = 8, queryIntervalSeconds = 60, //                            
-		retryMaxTimes = 3, retryFirstDelaySeconds = 3, retryIntervalSeconds = 5)                                
-public String doSometh_AndThen_Invoke_Another_ETF(EtfDemoVo etfDemoVo) throws Exception {                       
-                                                                                                                
-	EtfTemplateWithRedisDao<EtfDemoEnum, String> etfTemplate = new EtfTemplateWithRedisDao<EtfDemoEnum, String>(
-			etfDaoRedis) {                                                                                      
-                                                                                                                
-		@Override                                                                                               
-		protected String calcEtfBizId() {                                                                       
-			return etfDemoVo.getCode();                                                                         
-		}                                                                                                       
-                                                                                                                
-		@Override                                                                                               
-		protected void doBizWithinEtf() throws EtfException4TransNeedRetry {                                    
-			throw new EtfException4TransNeedRetry("失败 需要重试一次");                                                 
-		}                                                                                                       
-                                                                                                                
-		@Override                                                                                               
-		protected void doRetryByEtf(String retryTimerKey, Integer retryCount) {                                 
-			logger.debug("一次重试完成，需要轮询交易结果:" + etfDemoVo.getCode());	                                             
-		}                                                                                                       
-                                                                                                                
-		@Override                                                                                               
-		protected String constructResult() {                                                                    
-			return "return " + etfDemoVo.getCode();                                                             
-		}                                                                                                       
-                                                                                                                
-		@Override                                                                                               
-		protected boolean doTransQueryOrNextTransByEtf(String queryTimerKey, Integer queryCount)                
-				throws EtfException4TransQueryReturnFailureResult, EtfException4MaxQueryTimes {                 
-			logger.debug("第" + queryCount + "次轮询交易结果" + queryTimerKey + "一次性成功");                               
-			try {                                                                                               
-				EtfDemoVo2 etfDemoVo2 = new EtfDemoVo2();                                                       
-				etfDemoVo2.setCode(etfDemoVo.getCode());                                                        
-				etfDemoComponent2.doSometh_Simple_By_Another_Etf(etfDemoVo2);                                   
-			} catch (Exception e) {                                                                             
-				logger.error(e.getMessage());                                                                   
-			}                                                                                                   
-			return true;                                                                                        
-		}                                                                                                       
-	};                                                                                                          
-	return etfTemplate.executeEtfTransaction();                                                                 
-}                                                                                                               
-```
 
 ## ETF主要借助Redis的一些关键特性 实现了多种交易最终一致性机制
 ETF的最关键特性，目前都是严重依赖Redis的一些特性实现的：
