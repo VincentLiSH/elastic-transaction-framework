@@ -6,6 +6,7 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import cn.panshi.etf4j.redis.IRedisNxLockProtected;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisCommands;
@@ -14,14 +15,30 @@ import redis.clients.jedis.JedisCommands;
 public abstract class EtfAbstractRedisLockTemplate {
 	RedisTemplate redisTemplate;
 	int expireSeconds;
-	
+
 	String lockToken;
 
 	public EtfAbstractRedisLockTemplate(RedisTemplate redisTemplate, int expireSeconds, String lockToken) {
 		super();
 		this.redisTemplate = redisTemplate;
 		this.expireSeconds = expireSeconds;
-		this.lockToken = lockToken; 
+		this.lockToken = lockToken;
+	}
+
+	public final void doBizWithinLockProtection(IRedisNxLockProtected rlp) {
+		boolean lockSuccess = this.lock();
+		try {
+			if (!lockSuccess) {
+				rlp.onLockFailure();
+			} else {
+				rlp.doBizOnLockSuccess();
+			}
+		} finally {
+			if (lockSuccess) {
+				Long unlock = this.unlock();
+				rlp.onFinalReleaseLock(unlock);
+			}
+		}
 	}
 
 	public final boolean lock() {
