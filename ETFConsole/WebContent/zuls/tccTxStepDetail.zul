@@ -1,10 +1,10 @@
 <groupbox viewModel="@id('vm') @init('cn.panshi.etf.console.ctrl.TccTxStepDetailCtrl')" closable="false" hflex="true"
 	mold="3d" vflex="true">
 	<!-- <caption label="交易步骤详情" iconSclass="z-icon-list" /> -->
-	<grid hflex="true" vflex="true" model="@load(vm.stepList)">
+	<grid hflex="true" vflex="true" model="@load(vm.stepList)" emptyMessage="查询结果为空">
 		<columns>
 			<column width="120px" align="left" label="步骤" />
-			<column hflex="true" align="left" label="入参" />
+			<column width="220px" align="left" label="入参" />
 			<column width="140px" align="center" label="开始时间" />
 			<column hflex="true" align="left" label="错误信息" />
 		</columns>

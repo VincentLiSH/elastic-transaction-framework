@@ -72,11 +72,21 @@ public class EtfTccBeanUtil implements BeanPostProcessor {
 
 		for (int i = 0; i < methodParamArray.length; i++) {
 			Parameter methodParam = methodParamArray[i];
-			argArry2InvokeTarget[i] = JSONObject.toJavaObject(paramJsonObj.getJSONObject(paraNames[i]),
-					methodParam.getType());
+			try {
+				argArry2InvokeTarget[i] = JSONObject.toJavaObject(paramJsonObj.getJSONObject(paraNames[i]),
+						methodParam.getType());
+			} catch (ClassCastException e) {
+				logger.debug(paraNames[i] + "非JSONObject简单参数直接取值");
+				argArry2InvokeTarget[i] = paramJsonObj.get(paraNames[i]);
+			}
 		}
-		Object object = ReflectionUtils.invokeMethod(method, target, argArry2InvokeTarget);
-		System.out.println(EtfTccBeanUtil.class.getName() + ":无需输出此日志到logger，仅开发调试用。" + EtfTccBeanUtil.class.getName()
-				+ ".invokeMethod return " + object);
+		try {
+			Object object = ReflectionUtils.invokeMethod(method, target, argArry2InvokeTarget);
+			System.out.println(EtfTccBeanUtil.class.getName() + ":无需输出此日志到logger，仅开发调试用。"
+					+ EtfTccBeanUtil.class.getName() + ".invokeMethod return " + object);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw e;
+		}
 	}
 }

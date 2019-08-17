@@ -1,6 +1,6 @@
 <project name="etf4j" default="help" xmlns:ivy="antlib:org.apache.ivy.ant">
 	<!--ivy properties used -->
-	<property name="publish.version" value="0.0.1" />
+	<property name="publish.version" value="0.0.2" />
 	<property name="ivy.report.todir" value="build" />
 	<property name="ivy.pom.version" value="${publish.version}" />
 

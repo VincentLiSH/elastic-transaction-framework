@@ -12,23 +12,36 @@
 	</style>
 	<window viewModel="@id('vm') @init('cn.panshi.etf.console.ctrl.TccTxListCtrl')" position="center,center"
 		closable="false" sizable="false" maximizable="false" hflex="true" vflex="true">
-		<hbox hflex="true" vflex="true">
-
-			<groupbox closable="false" hflex="true" mold="3d" vflex="true">
-				<caption label="Tcc成功交易列表" iconSclass="z-icon-list">
-					<div class="btn-group caption-right">
-						<button iconSclass="z-icon-refresh" class="btn-group btn-xs" onClick="@command('onRefresh')" />
-					</div>
-				</caption>
-				<grid hflex="true" vflex="true">
-					<columns>
-						<column width="35px" />
-						<column width="40px"  align="left" />
-						<column hflex="true"  iconSclass="z-icon-key" />
-					</columns>
-					<rows id="rows"></rows>
-				</grid>
-			</groupbox>
+		<hbox>
+		<button label="触发订单处理交易(扣减库存+物流下单)" onClick="@command('exePlaceOrderTx')"/>
 		</hbox>
+		<tabbox hflex="true" vflex="true">
+			<tabs>
+				<tab label="Tcc成功交易列表" iconSclass="z-icon-list" id="tabSuccess"/>
+				<tab label="Tcc失败交易列表" iconSclass="z-icon-list" id="tabCanceled"/>
+			</tabs>
+			<tabpanels>
+				<tabpanel>
+					<grid hflex="true" vflex="true" emptyMessage="查询结果为空">
+						<columns>
+							<column width="35px" />
+							<column width="40px" align="left" />
+							<column hflex="true" iconSclass="z-icon-key" />
+						</columns>
+						<rows id="rowsSuccess"></rows>
+					</grid>
+				</tabpanel>
+				<tabpanel>
+					<grid hflex="true" vflex="true" emptyMessage="查询结果为空">
+						<columns>
+							<column width="35px" />
+							<column width="40px" align="left" />
+							<column hflex="true" iconSclass="z-icon-key" />
+						</columns>
+						<rows id="rowsFailure"></rows>
+					</grid>
+				</tabpanel>
+			</tabpanels>
+		</tabbox>
 	</window>
 </zk>

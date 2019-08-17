@@ -6,7 +6,7 @@
 	<settings defaultResolver="defaultChain" defaultConflictManager="latest-revision" />
 	<caches defaultCacheDir="d:/.ivy2" />
 	<property name="spring.version" value="4.3.19.RELEASE"/>
-	<property name="zk.version" value="8.6.2-Eval"/><!--7.0.3-Eval 7.0.5.1-Eval  8.0.0.FL.20150416-Eval -->
+	<property name="zk.version" value="8.6.2-Eval"/>
 	
 	<property name="nexus-public" value="http://115.159.113.31:8078/nexus/content/groups/public" />
 	<property name="nexus-releases" value="http://115.159.113.31:8078/nexus/content/repositories/releases" />
@@ -23,7 +23,6 @@
 			<ibiblio name="zk" m2compatible="true" usepoms="true" root="http://mavensync.zkoss.org/eval" />
 			<ibiblio name="zkce" m2compatible="true" usepoms="true" root="http://mavensync.zkoss.org/maven2" />
 			<ibiblio name="clojars" m2compatible="true" usepoms="true" root="http://clojars.org/repo" />
-			<!-- https://github.com/michaelklishin/quartz-mongodb -->
 		</chain>
 	</resolvers>
 </ivysettings>

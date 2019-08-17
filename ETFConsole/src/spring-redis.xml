@@ -40,4 +40,28 @@
 		</property>
 	</bean>
 
+	<bean id="redisMessageListenerContainer"
+		class="org.springframework.data.redis.listener.RedisMessageListenerContainer" destroy-method="destroy">
+		<property name="connectionFactory" ref="jedisConnectionFactory" />
+		<property name="taskExecutor">
+			<bean class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
+				<property name="poolSize" value="10" />
+			</bean>
+		</property>
+		<property name="messageListeners">
+			<map>
+				<entry key-ref="redisMessageListener">
+					<list>
+						<bean class="org.springframework.data.redis.listener.PatternTopic">
+							<constructor-arg value="TCC_SUCCESS_NOTIFY" />
+						</bean>
+						<bean class="org.springframework.data.redis.listener.PatternTopic">
+							<constructor-arg value="TCC_CANCELED_NOTIFY" />
+						</bean>
+					</list>
+				</entry>
+			</map>
+		</property>
+	</bean>
+
 </beans>

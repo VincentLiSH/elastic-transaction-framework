@@ -43,10 +43,10 @@
 		<value>center</value>
 	</library-property>
 
-	<library-property>
+	<!-- <library-property>
 		<name>org.zkoss.zkex.ui.comet.smartconnection.disabled</name>
 		<value>true</value>
-	</library-property>
+	</library-property> -->
 
 	<!-- fix paging issue -->
 	<library-property>
@@ -143,8 +143,9 @@
 		<label-location>/WEB-INF/i18n/app.properties</label-location>
 	</system-config> -->
 	
-	<!-- <listener>
-    <listener-class>net.zkbc.aitou.common.ZkEventInterceptor</listener-class>
-</listener> -->
+    
+<listener>
+  <listener-class>org.zkoss.zkmax.au.websocket.WebSocketWebAppInit</listener-class>
+ </listener>    
 
 </zk>

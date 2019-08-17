@@ -25,7 +25,7 @@ public abstract class EtfTccTransTemplate<T_tcc_trans_enum extends Enum<T_tcc_tr
 		tcc_prepare, tcc_try, tcc_confirm, tcc_cancel;
 	}
 
-	public final void executeWithinEtfTcc() throws EtfRobErr4LockConcurrent {
+	public final void executeWithinEtfTcc() {
 		TCC_TRANS_STAGE stage = calcCurrTccStage();
 
 		if (stage == TCC_TRANS_STAGE.tcc_prepare) {

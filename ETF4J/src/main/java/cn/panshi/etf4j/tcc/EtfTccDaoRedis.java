@@ -45,6 +45,10 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		ETF_TCC_CANCELED_LIST;
 	}
 
+	public enum ETF_TCC_PUB_CHANNEL {
+		TCC_SUCCESS_NOTIFY, TCC_CANCELED_NOTIFY;
+	}
+
 	@Override
 	public EtfTccStep loadTccTransRecordStep(String tccEnumClazzName, String transType, String bizId) {
 		String key = calcTccRecordStepKey(tccEnumClazzName, transType, bizId);
@@ -287,8 +291,11 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy:MM:dd_:HH");
 		String canceledListKey = ETF_TCC_KEYS.ETF_TCC_CANCELED_LIST + ":" + sdf.format(new Date());
 
-		redisTemplate.opsForList().leftPush(canceledListKey, tccEnumClazzName + "#" + bizId);
+		redisTemplate.opsForList().leftPush(canceledListKey, tccEnumClazzName + ":#" + bizId);
 		redisTemplate.opsForList().trim(canceledListKey, 0, DEFAULT_CANCELED_LIST_SIZE);
+
+		redisTemplate.convertAndSend(ETF_TCC_PUB_CHANNEL.TCC_CANCELED_NOTIFY.toString(),
+				tccEnumClazzName + "#" + bizId);
 	}
 
 	@Override
@@ -311,6 +318,8 @@ public class EtfTccDaoRedis implements EtfTccDao {
 
 		redisTemplate.opsForList().leftPush(successListKey, tccEnumClazzName + ":#" + bizId);
 		redisTemplate.opsForList().trim(successListKey, 0, DEFAULT_SUCCESS_LIST_SIZE);
+
+		redisTemplate.convertAndSend(ETF_TCC_PUB_CHANNEL.TCC_SUCCESS_NOTIFY.toString(), tccEnumClazzName + "#" + bizId);
 	}
 
 	@Override

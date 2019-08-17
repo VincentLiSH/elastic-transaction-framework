@@ -1,14 +1,14 @@
 <ivysettings>
     <ivy:configure>
-		<credentials host="x.x.x.x" realm="Sonatype Nexus Repository Manager" username="admin" passwd="admin123" />
+		<credentials host="115.159.113.31" realm="Sonatype Nexus Repository Manager" username="admin" passwd="admin123" />
 	</ivy:configure>
 	<settings defaultResolver="defaultChain" defaultConflictManager="latest-revision" />
 	<caches defaultCacheDir="e:/.ivy2" />
 	<property name="spring.version" value="4.3.19.RELEASE"/>
 	
-	<property name="nexus-public" value="http://x.x.x.x:8078/nexus/content/groups/public" />
-	<property name="nexus-releases" value="http://x.x.x.x:8078/nexus/content/repositories/releases" />
-	<property name="nexus-snapshots" value="http://x.x.x.x:8078/nexus/content/repositories/snapshots" />
+	<property name="nexus-public" value="http://115.159.113.31:8078/nexus/content/groups/public" />
+	<property name="nexus-releases" value="http://115.159.113.31:8078/nexus/content/repositories/releases" />
+	<property name="nexus-snapshots" value="http://115.159.113.31:8078/nexus/content/repositories/snapshots" />
 	
 	<resolvers>
 		<chain name="defaultChain" checkmodified="true" changingPattern=".*SNAPSHOT">

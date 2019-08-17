@@ -15,7 +15,7 @@
   	</publications>
 
 	<dependencies defaultconfmapping="compile->compile(*),master(*);runtime->master(*),compile(*),runtime(*)">
-		<dependency org="cn.panshi" name="etf4j" rev="0.0.1" conf="compile;runtime" />
+		<dependency org="cn.panshi" name="etf4j" rev="0.0.2-SNAPSHOT" conf="compile;runtime" />
 		
 		<dependency org="com.lowagie" name="itext" rev="4.2.0" conf="compile;runtime"/>
 		
