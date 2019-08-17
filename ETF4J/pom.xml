@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cn.panshi</groupId>
 	<artifactId>etf4j</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>Archetype - etf4j</name>
 	<url>http://maven.apache.org</url>
 

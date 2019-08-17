@@ -1,0 +1,54 @@
+/* 轻量级tab：扁平风格 */
+.light-tabs.z-tabbox {
+	position: absolute;
+	top: 0;
+}
+
+.light-tabs.z-tabbox .z-tabs-content {
+	border-bottom-color: #DCE8F1;
+	border-top-color: #ffffff;
+	padding: 0 10px 0 3px;
+}
+
+.light-tabs.z-tabbox .z-tab {
+	border-width: 0 0 0 0;
+	border-radius: 0;
+	padding-top: 0;
+	font-family: 'Open Sans';
+}
+
+.light-tabs.z-tabbox .z-tab,.light-tabs.z-tabbox .z-tab:hover,.light-tabs.z-tabbox .z-tab:focus,.light-tabs.z-tabbox .z-tab:active
+	{
+	background: none;
+	filter: progid:DXImageTransform.Microsoft.gradient(enabled=false );
+	background-color: transparent;
+}
+
+.light-tabs.z-tabbox .z-tab-selected {
+	border-width: 2px 1px 0 1px;
+	border-color: #DCE8F1;
+	border-top-color: #000000;
+	border-style: solid;
+}
+
+.light-tabs.z-tabbox .z-tab-selected .z-tab-text {
+	font-weight: normal;
+}
+
+.light-tabs.z-tabbox .z-tabpanel {
+	border: 0;
+	padding: 0px 0px;
+}
+
+.light-tabs.z-tabbox .rcaption {
+	display: block;
+	width: auto;
+	height: 18px;
+	margin: 10px 0;
+	font-size: 17px;
+	line-height: normal;
+}
+
+.light-tabs.z-tabbox .z-tab:first-child.z-tab-selected+.z-tab {
+	box-shadow: none;
+}

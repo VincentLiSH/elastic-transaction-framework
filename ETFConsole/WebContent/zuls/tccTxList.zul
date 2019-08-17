@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<zk>
+	<style src="/zuls/css/fonts.css" />
+	<style src="/zuls/css/home.css" />
+	<style src="/zuls/css/tabbox.css" />
+	<style src="/zuls/css/button.css" />
+	<style>
+		<!-- 去掉最外层边框边距（只能直接在页面中定义，移到css中无效） -->
+		<!-- .topwin>div>.z-north,.topwin>div>.z-west,.topwin>div>.z-center,.topwin>div>.z-east { border: none; } body {
+			padding: 0 0; } -->
+	</style>
+	<window viewModel="@id('vm') @init('cn.panshi.etf.console.ctrl.TccTxListCtrl')" position="center,center"
+		closable="false" sizable="false" maximizable="false" hflex="true" vflex="true">
+		<hbox hflex="true" vflex="true">
+
+			<groupbox closable="false" width="600px" mold="3d" vflex="true">
+				<caption label="Tcc成功交易列表" iconSclass="z-icon-list">
+					<div class="btn-group caption-right">
+						<button iconSclass="z-icon-refresh" class="btn-group btn-xs" onClick="@command('onRefresh')" />
+					</div>
+				</caption>
+				<grid hflex="true" vflex="true">
+					<columns>
+						<column width="60px" label="序号" align="left" />
+						<column hflex="true" label="交易标识" iconSclass="z-icon-key" />
+					</columns>
+					<rows id="rows"></rows>
+				</grid>
+			</groupbox>
+
+			<groupbox closable="false" hflex="true" mold="3d" vflex="true">
+				<caption label="交易步骤详情" iconSclass="z-icon-list">
+					<div class="btn-group caption-right">
+						<button iconSclass="z-icon-refresh" class="btn-group btn-xs" onClick="@command('onRefresh')" />
+					</div>
+				</caption>
+				<grid hflex="true" vflex="true" model="@load(vm.stepList)">
+					<columns>
+						<column width="40px" align="center" label="序号" />
+						<column width="120px" align="left" label="步骤" />
+						<column hflex="true" align="center" label="入参" />
+						<column width="140px" align="center" label="开始时间" />
+						<column hflex="true" align="center" label="错误信息" />
+					</columns>
+					<template name="model">
+						<row>
+							<label value="${forEachStatus.index+1}" />
+							<label value="@load(each.tccEnumValue)" />
+							<label value="@load(each.bizStateJson)" tooltiptext="@load(each.bizStateJson)" />
+							<label value="@load(each.crtDate) @converter('formatedDate', format='yyyy/MM/dd HH:mm:ss')" />
+							<label value="@load(each.error)" tooltiptext="@load(each.error)" />
+						</row>
+					</template>
+				</grid>
+			</groupbox>
+		</hbox>
+	</window>
+</zk>

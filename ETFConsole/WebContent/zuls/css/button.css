@@ -1,0 +1,23 @@
+.blue-button.z-button,.blue-button.z-button:focus,.blue-button.z-button:active
+	{
+	background: linear-gradient(to bottom, #1369AC 0%, #1369AC 100%) repeat
+		scroll 0 0 rgba(0, 0, 0, 0);
+	border: 1px solid #aeaeae;
+	border-radius: 0px;
+	color: #ffffff;
+	cursor: pointer;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 200;
+	line-height: 14px;
+	min-height: 24px;
+	padding: 3px 12px;
+	text-shadow: none;
+	white-space: nowrap;
+}
+
+.blue-button.z-button:hover{
+	background: linear-gradient(to bottom, #329bcb 0%, #329bcb 100%) repeat
+		scroll 0 0 rgba(0, 0, 0, 0);
+}

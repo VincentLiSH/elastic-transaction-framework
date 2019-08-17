@@ -1,0 +1,181 @@
+/* 0 padding on top and bottom and 0 padding on right and left */
+body {
+	padding: 0 0;
+}
+
+/* 首页清爽布局：去掉border边框   .topwin.z-borderlayout div#wEvW4 div#wEvW4-real.z-north */
+.topwin>div>.z-north,.topwin>div>.z-west,.topwin>div>.z-center,.topwin>div>.z-east
+	{
+	border: none;
+}
+
+/* east深色产生阶梯效果，感觉更清晰 */
+.darkEast.z-east,.darkEast.z-east .z-caption {
+	background-color: #F3F7F7;
+}
+
+/* tab页签文字上提，默认的上下不居中贴地了 */
+/* .z-tab-text {
+	line-height: 18px;
+} */
+/* 去掉west收缩时左侧边距 */
+.z-west-collapsed {
+	padding-left: 0;
+}
+
+/* 右上角个人信息、退出按钮icon图标  */
+.admin-new,.msg-new,.logout-new {
+	background: url(../images/menu_ico_16.png) no-repeat;
+	width: 16px;
+	height: 16px;
+	display: block;
+	cursor: pointer;
+}
+
+.admin-new {
+	background-position: 0 0;
+}
+
+.msg-new {
+	background-position: -16px 0;
+}
+
+.logout-new {
+	background-position: -32px 0;
+}
+
+div.z-treecell-content span.mock-menu {
+	font-style: italic !important;
+	font-weight: bold !important;
+}
+
+/* a模拟顶层页签：首页、控制台…… */
+.topmenu-hbox td a {
+	color: #000;
+	display: block;
+	font-size: 14px;
+	font-weight: bold;
+	height: 40px;
+	line-height: 40px;
+	padding: 0 10px;
+	text-decoration: none;
+	align: center;
+}
+
+.topmenu-hbox .topmenu-sel {
+	background-color: #2f84b2;
+	color: #fff;
+	font-weight: bold;
+}
+
+.topmenu-hbox td a:hover,.topmenu-current {
+	background-color: #2f84b2;
+	color: #000;
+	font-weight: bold;
+}
+
+/* title底色蓝色的groupbox */
+.blue-group-box .z-groupbox-3d>.z-groupbox-header {
+	background: linear-gradient(to bottom, #009BC7 0%, #009BC7 100%) repeat
+		scroll 0 0 rgba(0, 0, 0, 0);
+	color: #ffffff;
+}
+
+.green-group-box .z-groupbox-3d>.z-groupbox-header {
+	background: linear-gradient(to bottom, green 0%, green 100%) repeat
+		scroll 0 0 rgba(0, 0, 0, 0);
+	color: #ffffff;
+}
+.gray-group-box .z-groupbox-3d>.z-groupbox-header {
+	background: linear-gradient(to bottom, gray 0%, gray 100%) repeat
+		scroll 0 0 rgba(0, 0, 0, 0);
+	color: #ffffff;
+}
+
+.yellow-group-box .z-groupbox-3d>.z-groupbox-header {
+	background: linear-gradient(to bottom, yellow 0%, yellow 100%) repeat
+		scroll 0 0 rgba(0, 0, 0, 0);
+	color: #000000;
+}
+
+.orange-group-box .z-groupbox-3d>.z-groupbox-header {
+	background: linear-gradient(to bottom, orange 0%, orange 100%) repeat
+		scroll 0 0 rgba(0, 0, 0, 0);
+	color: #ffffff;
+}
+
+.purple-group-box .z-groupbox-3d>.z-groupbox-header {
+	background: linear-gradient(to bottom, purple 0%, purple 100%) repeat
+		scroll 0 0 rgba(0, 0, 0, 0);
+	color: #ffffff;
+}
+
+.red-group-box .z-groupbox-3d>.z-groupbox-header {
+	background: linear-gradient(to bottom, red 0%, red 100%) repeat
+		scroll 0 0 rgba(0, 0, 0, 0);
+	color: #ffffff;
+}
+
+/* 去掉groupbox内的多余padding和border条条框框，看起来更清爽简洁  */
+.light-group-box > .z-groupbox-content {
+	padding:0 !important;border:0px;
+}
+
+/* groupbox标题栏放置按钮，并且居右 */
+.z-caption-content {
+	float: left;
+	white-space: normal; /* 解决firefox下，caption中按钮换行问题
+		*/
+	display: inline;
+}
+
+.z-caption-content .btn-group.caption-right.z-div {
+	float: right;
+	vertical-align: middle;
+	padding-top: 2px
+}
+
+.z-window-header .z-caption .z-caption-content{
+	width:97%;
+	display: inline;
+}
+
+/* 以下css 会导致groupbox caption居右的按钮之间存在空隙
+ .z-caption-content .btn-group.caption-right.z-div button {
+	float: right;
+	vertical-align: middle;
+	padding-top: 2px
+} */
+
+/* caption标题栏宽度撑开，以便放置按钮  */
+/* .caption-align-right .z-caption-content,.z-caption .z-label {
+	width: 100%;
+}
+
+.z-caption>*:first-child table {
+	width: 100%;
+} */
+.z-tabpanel {
+	padding: 0px;
+}
+
+.z-window-content {
+	padding: 0px;
+}
+
+/* 表单grid取消隔行换色  transparent跟pannel底色保持一致  */
+.simple-white-grid .z-row-inner,.simple-white-grid .z-cell,.simple-white-grid .z-row:hover>.z-row-inner,.z-row:hover>.z-cell
+	{
+	background-color: transparent;
+}
+
+.vlayout-no-padding .z-vlayout-inner {
+	padding:0px !important;
+	border:0px !important;
+}
+
+.simple-white-grid {
+	border: 0px;
+}
+
+.well{padding:2px !important; margin-bottom:2px !important;}

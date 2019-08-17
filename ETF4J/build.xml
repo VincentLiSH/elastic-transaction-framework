@@ -20,7 +20,7 @@
 	</target>
 
 	<target name="resolve" description="-- parse ivy.xml">
-		<ivy:resolve file="ivy.xml" conf="*" useCacheOnly="true" />
+		<ivy:resolve file="ivy.xml" conf="*" useCacheOnly="false" />
 		<ivy:cachepath pathid="ivy.libs.compile" type="jar,bundle" conf="compile,provided" />
 		<ivy:cachepath pathid="ivy.libs.test" type="jar,bundle" conf="test,provided" />
 		<ivy:cachepath pathid="ivy.libs.runtime" type="jar,bundle" conf="runtime" />

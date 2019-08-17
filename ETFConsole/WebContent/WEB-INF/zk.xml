@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<zk>
+	<session-config>
+		<timer-keep-alive>true</timer-keep-alive>
+		<session-timeout>7200</session-timeout>
+		<max-pushes-per-session>-1</max-pushes-per-session>
+	</session-config>
+
+	<preference>
+		<name>org.zkoss.zul.Window.defaultActionOnShow</name>
+		<value></value>
+	</preference>
+
+	<library-property>
+		<name>org.zkoss.zul.Button.mold</name>
+		<value>bs</value>
+	</library-property>
+	<library-property>
+		<name>org.zkoss.zul.Menupopup.mold</name>
+		<value>bs</value>
+	</library-property>
+	<!-- <library-property>
+		<name>org.zkoss.zkmax.zul.Navbar.mold</name>
+		<value>bs</value>
+	</library-property> -->
+	<library-property>
+		<name>org.zkoss.zul.Paging.mold</name>
+		<value>bs</value>
+	</library-property>
+	<library-property>
+		<name>org.zkoss.zul.Panel.mold</name>
+		<value>bs</value>
+	</library-property>
+
+	<library-property>
+		<name>org.zkoss.zul.listbox.autohidePaging</name>
+		<value>false</value>
+	</library-property>
+
+	<library-property>
+		<name>org.zkoss.zul.progressbox.position</name>
+		<value>center</value>
+	</library-property>
+
+	<library-property>
+		<name>org.zkoss.zkex.ui.comet.smartconnection.disabled</name>
+		<value>true</value>
+	</library-property>
+
+	<!-- fix paging issue -->
+	<library-property>
+		<name>org.zkoss.zul.grid.rod</name>
+		<value>true</value>
+	</library-property>
+	<library-property>
+		<name>org.zkoss.zul.listbox.rod</name>
+		<value>true</value>
+	</library-property>
+
+	<client-config>
+		<debug-js>false</debug-js>
+		<disable-behind-modal>true</disable-behind-modal>
+	</client-config>
+
+	<!-- 下面的配置可以使progressbox进度框呈modal模态窗口模式，后面的页面被屏蔽 http://forum.zkoss.org/question/71292/progressbox-with-modal-effect-disabling-all-components/?answer=71551#post-id-71551 -->
+	<device-config>
+		<device-type>ajax</device-type>
+		<!-- An empty URL can cause the browser to reload the same URL -->
+		<timeout-uri></timeout-uri>
+		<server-push-class>org.zkoss.zkmax.ui.comet.CometServerPush
+		</server-push-class>
+		<!-- <server-push-class>org.zkoss.zk.ui.impl.PollingServerPush</server-push-class> -->
+		<!-- Custom javascript snippets -->
+		<embed>
+         <![CDATA[
+            <script type="text/javascript">
+                zUtl.progressbox = function(id, msg, mask, icon) {
+                mask=true; //Ponemos este booleano a true para que el progressbox siempre aparezca como
+                			//una ventana modal (con todos los componentes de abajo deshabilitados)
+                    if (mask && zk.Page.contained.length) {
+                        for (var c = zk.Page.contained.length, e = zk.Page.contained[--c];                   e; e = zk.Page.contained[--c]) {
+                            if (!e._applyMask)
+                                e._applyMask = new zk.eff.Mask({
+                                    id: e.uuid + "-mask",
+                                    message: msg,
+                                    anchor: e.$n()
+                                });
+                        }
+                        return;
+                    }
+
+                    if (mask)
+                        zk.isBusy++;
+
+                    var x = jq.innerX(), y = jq.innerY(),
+                        style = ' style="left:'+x+'px;top:'+y+'px"',
+                        idtxt = id + '-t',
+                        idmsk = id + '-m',
+                        html = '<div id="'+id+'"';
+                    if (mask)
+                        html += '><div id="' + idmsk + '" class="z-modal-mask"'+style+'></div';
+                    html += '><div id="'+idtxt+'" class="z-loading"'+style
+                        +'><div class="z-loading-indicator"><span class="z-loading-icon"></span> '
+                        +msg+'</div></div>';
+                    if (icon)
+                        html += '<div class="' + icon + '"></div>';
+                    jq(document.body).append(html + '</div>');
+                    var $n = jq(id, zk),
+                        n = $n[0],
+                        $txt = jq(idtxt, zk);
+                    if (mask)
+                        n.z_mask = new zk.eff.FullMask({
+                            mask: jq(idmsk, zk)[0],
+                            zIndex: $txt.css('z-index') - 1
+                        });
+
+                    //center
+                    var txt = $txt[0],
+                        st = txt.style;
+                    st.left = jq.px((jq.innerWidth() - txt.offsetWidth) / 2 + x);
+                    st.top = jq.px((jq.innerHeight() - txt.offsetHeight) / 2 + y);
+
+                    $n.zk.cleanVisibility();
+                }                       
+            </script>]]>
+		</embed>
+	</device-config>
+
+	<!-- Configure the error page -->
+	<error-page>
+		<exception-type>java.lang.Throwable</exception-type>
+		<location>/error.zul</location>
+	</error-page>
+
+	<!-- Font and Size -->
+	<language-config>
+		<addon-uri>/WEB-INF/lang-addon.xml</addon-uri>
+	</language-config>
+
+	<!-- <system-config>
+		<label-location>/WEB-INF/i18n/sys.properties</label-location>
+		<label-location>/WEB-INF/i18n/app.properties</label-location>
+	</system-config> -->
+	
+	<!-- <listener>
+    <listener-class>net.zkbc.aitou.common.ZkEventInterceptor</listener-class>
+</listener> -->
+
+</zk>

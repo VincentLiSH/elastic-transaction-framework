@@ -1,0 +1,400 @@
+<project name="credit" default="help" xmlns:ivy="antlib:org.apache.ivy.ant">
+	<!--ivy properties used -->
+	<property name="publish.version" value="0.13" />
+	<property name="ivy.report.todir" value="build" />
+
+	<property name="build.debug" value="on" />
+	<property name="build.dir" value="${basedir}/build" />
+	<property name="classes.dir" value="${build.dir}/classes" />
+	<property name="web.dir" value="WebContent" />
+	<property name="test.dir" value="build/test" />
+
+	<ivy:settings file="ivysettings.xml" />
+
+	<target name="help">
+		<echo message="~~~~~~~~~~~~~~构建命令说明~~~~~~~~~~~~~~" />
+		<echo message="war-test" />
+		<echo message="war-product" />
+		<echo message="war-product106-quartz" />
+	</target>
+
+	<target name="resolve" description="-- parse ivy.xml">
+		<ivy:resolve file="ivy.xml" conf="*" useCacheOnly="true" />
+		<ivy:cachepath pathid="ivy.libs.compile" type="jar,bundle" conf="compile,provided" />
+		<ivy:cachepath pathid="ivy.libs.test" type="jar,bundle" conf="test,provided" />
+		<ivy:cachepath pathid="ivy.libs.runtime" type="jar,bundle" conf="runtime" />
+	</target>
+
+	<target name="ivy-download" description="-- parse ivy.xml">
+		<ivy:resolve file="ivy.xml" conf="*" useCacheOnly="false" />
+		<ivy:cachepath pathid="ivy.libs.compile" type="jar,bundle" conf="compile,provided" />
+		<ivy:cachepath pathid="ivy.libs.test" type="jar,bundle" conf="test,provided" />
+		<ivy:cachepath pathid="ivy.libs.runtime" type="jar,bundle" conf="runtime" />
+	</target>
+
+	<target name="ivy-report" depends="resolve" description="-- resolve and retrieve dependencies with ivy">
+		<ivy:report />
+	</target>
+	
+	<target name="xjc-ruitu-model" depends="resolve" description="解析xsd文件生成JAXB Model">
+		<taskdef name="xjc" classname="org.jvnet.jaxb2_commons.xjc.XJC2Task">
+			<classpath>
+				<path refid="ivy.libs.test" />
+				<path refid="ivy.libs.compile" />
+				<path refid="ivy.libs.runtime" />
+			</classpath>
+		</taskdef>
+
+		<xjc destdir="jaxb-src" header="false" encoding="UTF-8" package="com.ylzinfo.ehc.portal.ws.jaxb.ruitu">
+			<arg value="-Xfluent-api" />
+			<arg value="-extension" />
+			<schema dir="jaxb-src/xsds/ruitu" includes="ruitu.xsd" />
+			<binding dir="jaxb-src/xsds/ruitu" includes="ruitu.xjb" />
+		</xjc>
+	</target>
+	
+	<target name="xjc-ruitu-soap" depends="resolve" description="解析xsd文件生成JAXB Model">
+			<taskdef name="xjc" classname="org.jvnet.jaxb2_commons.xjc.XJC2Task">
+				<classpath>
+					<path refid="ivy.libs.test" />
+					<path refid="ivy.libs.compile" />
+					<path refid="ivy.libs.runtime" />
+				</classpath>
+			</taskdef>
+
+			<xjc destdir="jaxb-src" header="false" encoding="UTF-8" package="com.ylzinfo.ehc.portal.ws.ruitusoap">
+				<arg value="-wsdl" />
+				<arg value="http://192.168.11.151:9999/services/service?wsdl" />
+				<arg value="-Xfluent-api" />
+				<arg value="-extension" />	
+				<binding dir="jaxb-src" includes="ruitu.xjb" />		
+			</xjc>
+		</target>
+
+	<property environment="env" />
+	<path id="svnant.classpath">
+		<pathelement location="${env.ANT_HOME}/lib" />
+		<fileset dir="${env.ANT_HOME}/lib/">
+			<include name="svnant.jar" />
+		</fileset>
+	</path>
+
+	<typedef resource="org/tigris/subversion/svnant/svnantlib.xml" classpathref="svnant.classpath" />
+	<svnSetting id="svn.settings" svnkit="false" javahl="false" username="liyingquan" password="liyingquan" />
+	<target name="svninfo">
+		<svn refid="svn.settings">
+			<info target="${basedir}\" />
+			<singleinfo target="${basedir}\" property="svn.info.lastSubmmitter" request="author" />
+		</svn>
+		<echo message="${svn.info.lastSubmmitter}" />
+		<echo message="${svn.info.lastRev}" />
+
+		<concat destfile="${web.dir}/svninfo.txt">
+			svn.info.url:${svn.info.url}
+			svn.info.lastRev:${svn.info.lastRev}
+			svn.info.lastDate:${svn.info.lastDate}
+			svn.info.lastSubmmitter:${svn.info.lastSubmmitter}
+		</concat>
+	</target>
+
+	<target name="compile" depends="resolve">
+		<mkdir dir="${classes.dir}" />
+		<javac target="1.6" source="1.6" encoding="utf-8" srcdir="src;jaxb-src" destdir="${classes.dir}" debug="${build.debug}" includeantruntime="false">
+			<compilerarg value="-Xlint:unchecked" />
+			<classpath>
+				<path refid="ivy.libs.compile" />
+				<path refid="ivy.libs.test" />
+				<path>
+					<fileset dir="${web.dir}/WEB-INF/lib" includes="*.jar" />
+				</path>
+			</classpath>
+		</javac>
+		<copy todir="${classes.dir}">
+			<fileset dir="src">
+				<exclude name="**/*.java" />
+				<exclude name="**/*.properties" />
+			</fileset>
+		</copy>
+		<!-- copy the property files to class path -->
+		<native2ascii src="src" dest="${classes.dir}" includes="**/*.properties" encoding="UTF-8" />
+	</target>
+
+	<target name="javadoc">
+		<delete dir="javadoc" />
+		<javadoc encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" destdir="javadoc" windowtitle="MisumiNewCim API">
+			<packageset dir="src" defaultexcludes="yes">
+				<include name="com/misumi/newcim/**" />
+				<exclude name="org.zkoss/**" />
+			</packageset>
+		</javadoc>
+	</target>
+
+	<target name="jar" depends="compile" description="-- make a jar file for this project">
+		<mkdir dir="dist" />
+		<tstamp>
+			<format property="jar.time" pattern="yyyy-MM-dd hh:mm aa" locale="en" />
+		</tstamp>
+		<buildnumber />
+		<jar destfile="dist/${ant.project.name}.jar">
+			<manifest>
+				<attribute name="Build-Version" value="${publish.version}" />
+				<attribute name="Build-On" value="${jar.time}" />
+				<attribute name="Build-Number" value="${build.number}" />
+			</manifest>
+			<fileset dir="${classes.dir}" defaultexcludes="true">
+				<include name="**/vo/*.class" />
+				<include name="net/zkbc/aitou/entity/*.class" />
+				<include name="com/aitou/credit2/dubbo/*.class" />
+				<include name="net/zkbc/aitou/common/BaseHibernateModel.class" />
+				<include name="net/zkbc/aitou/common/BaseHibernateModelNoId.class" />
+				<include name="META-INF/spring-xml/*.xml" />
+			</fileset>
+			<fileset dir="src" defaultexcludes="true">
+				<include name="**/vo/*.java" />
+				<include name="net/zkbc/aitou/entity/*.java" />
+			</fileset>
+		</jar>
+	</target>
+	
+	<target name="gen-pom">
+	  <ivy:makepom ivyfile="ivy.xml" pomfile="dist/${ant.project.name}.pom">
+	    <mapping conf="default" scope="compile"/>
+	  </ivy:makepom>
+	</target>
+
+	<target name="publish-releases" depends="jar,gen-pom">
+		<property name="revision" value="${publish.version}" />
+		<ivy:publish artifactspattern="dist/[artifact].[ext]" resolver="releases" pubrevision="${publish.version}"
+			status="release" update="true" overwrite="true" forcedeliver="true" >
+		</ivy:publish>
+		<echo message="released with version ${publish.version}" />
+	</target>
+
+	<target name="publish-snapshots" depends="jar">
+		<property name="revision" value="${publish.version}" />
+		<ivy:publish artifactspattern="dist/[artifact].[ext]" resolver="snapshots" pubrevision="${publish.version}-SNAPSHOT" status="release" update="true" overwrite="true" forcedeliver="true" />
+		<echo message="released with version ${publish.version}" />
+	</target>
+
+	<macrodef name="package-war">
+		<attribute name="env.name" />
+		<attribute name="env.warname" />
+		<sequential>
+			<war destfile="dist/@{env.name}/@{env.warname}.zip" webxml="env/@{env.name}/WEB-INF/web.xml">
+				<fileset dir="${web.dir}">
+					<include name="**/*.*" />
+					<exclude name="**/web.xml" />
+					<exclude name="**/*Test.class" />
+				</fileset>
+				<fileset dir="${build.dir}" defaultexcludes="true">
+					<include name="**/zk.xml" />
+					<include name="**/login.zul" />
+				</fileset>
+				<classes dir="${classes.dir}" />
+				<mappedresources>
+					<restrict>
+						<path refid="ivy.libs.runtime" />
+						<type type="file" />
+					</restrict>
+					<chainedmapper>
+						<flattenmapper />
+						<globmapper from="*" to="WEB-INF/lib/*" />
+					</chainedmapper>
+				</mappedresources>
+			</war>
+			<delete file="${web.dir}/svninfo.txt" />
+		</sequential>
+	</macrodef>
+
+	<target name="war-uat" depends="clean,svninfo,compile" description="打UAT环境(139.196.105.0)war包">
+		<copy todir="${build.dir}" overwrite="true">
+			<fileset dir="env/uat" />
+		</copy>
+		<package-war env.name="uat" env.warname="${ant.project.name}" />
+	</target>
+	
+	<target name="war-uatLfLt" depends="clean,svninfo,compile" description="打UAT环境(139.196.105.0)war包">
+		<copy todir="${build.dir}" overwrite="true">
+			<fileset dir="env/uatLfLt" />
+		</copy>
+		<package-war env.name="uatLfLt" env.warname="${ant.project.name}LfLt" />
+	</target>
+
+	<target name="war-product" depends="clean,svninfo,compile" description="打product环境war包">
+		<copy todir="${build.dir}" overwrite="true">
+			<fileset dir="env/product" />
+		</copy>
+		<package-war env.name="product" env.warname="${ant.project.name}" />
+	</target>
+
+	<target name="war-product106-quartz" depends="clean,svninfo,compile" description="打product106环境war包">
+		<copy todir="${build.dir}" overwrite="true">
+			<fileset dir="env/product106-quartz" />
+		</copy>
+		
+		<war destfile="dist/product106-quartz/${ant.project.name}-106quartz.zip" webxml="env/product106-quartz/WEB-INF/web.xml">
+			<fileset dir="${web.dir}">
+				<include name="**/*.*" />
+				<exclude name="**/web.xml" />
+				<exclude name="**/*Test.class" />
+				<exclude name="**/*.zul" />
+			</fileset>
+			<fileset dir="${build.dir}" defaultexcludes="true">
+				<include name="**/zk.xml" />
+				<include name="**/login.zul" />
+			</fileset>
+			<classes dir="${classes.dir}" />
+			<mappedresources>
+				<restrict>
+					<path refid="ivy.libs.runtime" />
+					<type type="file" />
+				</restrict>
+				<chainedmapper>
+					<flattenmapper />
+					<globmapper from="*" to="WEB-INF/lib/*" />
+				</chainedmapper>
+			</mappedresources>
+		</war>
+		<delete file="${web.dir}/svninfo.txt" />
+	</target>
+	
+	<target name="war-scf-product" depends="clean,svninfo,compile">
+		<copy todir="${build.dir}" overwrite="true">
+			<fileset dir="env/scfProduct" />
+		</copy>
+		
+		<war destfile="dist/scfProduct/scf.zip" webxml="env/scfProduct/WEB-INF/web.xml">
+			<fileset dir="${web.dir}">
+				<include name="**/*.*" />
+				<exclude name="**/web.xml" />
+				<exclude name="**/*Test.class" />
+				<exclude name="**/home.zul" />
+			</fileset>
+			<fileset dir="${build.dir}" defaultexcludes="true">
+				<include name="**/zk.xml" />
+				<include name="**/login.zul" />
+			</fileset>
+			<classes dir="${classes.dir}" />
+			<mappedresources>
+				<restrict>
+					<path refid="ivy.libs.runtime" />
+					<type type="file" />
+				</restrict>
+				<chainedmapper>
+					<flattenmapper />
+					<globmapper from="*" to="WEB-INF/lib/*" />
+				</chainedmapper>
+			</mappedresources>
+		</war>
+		<delete file="${web.dir}/svninfo.txt" />
+	</target>
+	
+	<target name="war-scf-uat" depends="clean,svninfo,compile">
+		<copy todir="${build.dir}" overwrite="true">
+			<fileset dir="env/scfUat" />
+		</copy>
+		
+		<war destfile="dist/scfUat/scf.zip" webxml="env/scfUat/WEB-INF/web.xml">
+			<fileset dir="${web.dir}">
+				<include name="**/*.*" />
+				<exclude name="**/web.xml" />
+				<exclude name="**/*Test.class" />
+				<exclude name="**/home.zul" />
+			</fileset>
+			<fileset dir="${build.dir}" defaultexcludes="true">
+				<include name="**/zk.xml" />
+				<include name="**/login.zul" />
+			</fileset>
+			<classes dir="${classes.dir}" />
+			<mappedresources>
+				<restrict>
+					<path refid="ivy.libs.runtime" />
+					<type type="file" />
+				</restrict>
+				<chainedmapper>
+					<flattenmapper />
+					<globmapper from="*" to="WEB-INF/lib/*" />
+				</chainedmapper>
+			</mappedresources>
+		</war>
+		<delete file="${web.dir}/svninfo.txt" />
+	</target>
+
+	<target name="clean" description="--> clean the project">
+		<delete dir="${build.dir}" />
+	</target>
+
+	<target name="ut" depends="compile" description="运行所有单元测试">
+		<mkdir dir="build/test" />
+		<javac encoding="utf-8" srcdir="test" destdir="build/test" debug="${build.debug}" includeantruntime="false">
+			<compilerarg value="-Xlint:unchecked" />
+			<classpath>
+				<pathelement path="${classes.dir}" />
+				<path refid="ivy.libs.test" />
+				<path refid="ivy.libs.compile" />
+			</classpath>
+		</javac>
+		<copy todir="build/test">
+			<fileset dir="test">
+				<include name="**/*.*" />
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+		<available classname="junit.framework.TestCase" property="junit.present" />
+		<fail unless="junit.present" message="Please copy junit.jar into ${env.ANT_HOME}/lib" />
+		<mkdir dir="build/test/data" />
+		<junit printsummary="yes" forkmode="perBatch" fork="yes" errorProperty="test.failed" failureProperty="test.failed">
+			<classpath>
+				<path refid="ivy.libs.runtime" />
+				<path refid="ivy.libs.test" />
+				<path location="${classes.dir}" />
+				<path location="build/test" />
+			</classpath>
+			<formatter type="xml" />
+			<formatter type="brief" usefile="false" />
+			<batchtest fork="yes" todir="${test.dir}/data" if="testcase">
+				<fileset dir="build/test">
+					<include name="**/*${testcase}*" />
+					<exclude name="**/*TestCase.class" />
+				</fileset>
+			</batchtest>
+			<batchtest todir="build/test/data" unless="testcase">
+				<fileset dir="build/test">
+					<include name="**/*Test.class*" />
+					<exclude name="**/AbstractBaseTest.class" />
+				</fileset>
+			</batchtest>
+		</junit>
+		<test-report report.dir="build/test/reports" data.dir="${test.dir}/data" />
+		<fail if="test.failed">Unit tests failed. For error messages, check the log files in build/test/data.</fail>
+	</target>
+
+	<macrodef name="test-report">
+		<attribute name="data.dir" />
+		<attribute name="report.dir" />
+		<sequential>
+			<mkdir dir="@{report.dir}" />
+			<junitreport todir="@{report.dir}">
+				<fileset dir="@{data.dir}">
+					<include name="TEST-*.xml" />
+				</fileset>
+				<report format="frames" todir="@{report.dir}" />
+			</junitreport>
+		</sequential>
+	</macrodef>
+	<target name="test-reports" description="Generate test reports">
+		<mkdir dir="${test.dir}/reports" />
+		<test-report report.dir="${test.dir}/reports" data.dir="${test.dir}/data" />
+	</target>
+
+	<target name="h2" depends="resolve">
+		<path id="h2.runtime">
+			<path refid="ivy.libs.runtime" />
+		</path>
+		<echo message="启动H2内存数据库..." />
+		<java classname="org.h2.tools.Server">
+			<classpath refid="h2.runtime" />
+		</java>
+		<input message="Input anything to stop h2..." />
+	</target>
+</project>

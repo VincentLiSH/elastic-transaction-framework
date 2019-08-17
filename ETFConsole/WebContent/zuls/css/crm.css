@@ -1,0 +1,49 @@
+body {
+	padding: 0 0;
+	background: #EBEBEB;
+}
+
+.navbar {
+	background-color: #EDEDED;
+	height: 82px;
+	/* width: 1280px; */
+	background: url(../images/crm/top.jpg);
+}
+
+.sidebar {
+	/* height: 505px; */
+	background: url(../images/crm/background.png);
+}
+
+.sidebar .navi1 {
+	width: 70px;
+	line-height: 20px;
+	text-align: center;
+	padding: 1px 0;
+	cursor: pointer;
+	color: white;
+	border-bottom: 1px solid gray;
+	line-height: 20px;
+}
+
+.navi_font {
+	color: white;
+	font-weight: bold;
+	font-size: 13px;
+	font-family: "微软雅黑,宋体";
+}
+
+.taskBar {
+	width: 300px;
+}
+
+.taskBar_head {
+	font-weight: bold;
+	font-size: 13px;
+	font-family: "微软雅黑,宋体";
+}
+
+/*首页电话样式*/
+.telInfor {
+	float: left
+}

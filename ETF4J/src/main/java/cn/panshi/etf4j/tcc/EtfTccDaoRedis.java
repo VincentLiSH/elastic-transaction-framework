@@ -309,7 +309,7 @@ public class EtfTccDaoRedis implements EtfTccDao {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy:MM:dd_:HH:mm");
 		String successListKey = ETF_TCC_KEYS.ETF_TCC_SUCCESS_LIST + ":" + sdf.format(new Date());
 
-		redisTemplate.opsForList().leftPush(successListKey, tccEnumClazzName + "#" + bizId);
+		redisTemplate.opsForList().leftPush(successListKey, tccEnumClazzName + ":#" + bizId);
 		redisTemplate.opsForList().trim(successListKey, 0, DEFAULT_SUCCESS_LIST_SIZE);
 	}
 

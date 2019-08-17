@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivysettings>
+    <ivy:configure>
+		<credentials host="115.159.113.31" realm="Sonatype Nexus Repository Manager" username="admin" passwd="admin123" />
+	</ivy:configure>
+	<settings defaultResolver="defaultChain" defaultConflictManager="latest-revision" />
+	<caches defaultCacheDir="d:/.ivy2" />
+	<property name="spring.version" value="4.3.19.RELEASE"/>
+	<property name="zk.version" value="8.6.2-Eval"/><!--7.0.3-Eval 7.0.5.1-Eval  8.0.0.FL.20150416-Eval -->
+	
+	<property name="nexus-public" value="http://115.159.113.31:8078/nexus/content/groups/public" />
+	<property name="nexus-releases" value="http://115.159.113.31:8078/nexus/content/repositories/releases" />
+	<property name="nexus-snapshots" value="http://115.159.113.31:8078/nexus/content/repositories/snapshots" />
+	
+	<resolvers>
+		<chain name="defaultChain" checkmodified="true" changingPattern=".*SNAPSHOT">
+		    <ibiblio name="public" m2compatible="true" usepoms="true" />
+			<ibiblio name="public" m2compatible="true" usepoms="true" root="${nexus-public}" />
+			<ibiblio name="releases" m2compatible="true" usepoms="true" root="${nexus-releases}" />
+			<ibiblio name="snapshots" m2compatible="true" usepoms="true" root="${nexus-snapshots}"
+				pattern="[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]" />
+				
+			<ibiblio name="zk" m2compatible="true" usepoms="true" root="http://mavensync.zkoss.org/eval" />
+			<ibiblio name="zkce" m2compatible="true" usepoms="true" root="http://mavensync.zkoss.org/maven2" />
+			<ibiblio name="clojars" m2compatible="true" usepoms="true" root="http://clojars.org/repo" />
+			<!-- https://github.com/michaelklishin/quartz-mongodb -->
+		</chain>
+	</resolvers>
+</ivysettings>
