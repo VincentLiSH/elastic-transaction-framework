@@ -8,21 +8,26 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.redis.core.RedisTemplate;
-import org.zkoss.bind.BindUtils;
 import org.zkoss.bind.annotation.AfterCompose;
 import org.zkoss.bind.annotation.ContextParam;
 import org.zkoss.bind.annotation.ContextType;
 import org.zkoss.zk.ui.Component;
-import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.OpenEvent;
 import org.zkoss.zk.ui.select.Selectors;
 import org.zkoss.zk.ui.select.annotation.VariableResolver;
 import org.zkoss.zk.ui.select.annotation.Wire;
 import org.zkoss.zk.ui.select.annotation.WireVariable;
+import org.zkoss.zul.Detail;
 import org.zkoss.zul.Group;
+import org.zkoss.zul.Include;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.Row;
 import org.zkoss.zul.Rows;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 
 import cn.panshi.etf4j.tcc.EtfTccDaoRedis;
 import cn.panshi.etf4j.tcc.EtfTccStep;
@@ -65,34 +70,54 @@ public class TccTxListCtrl {
 			for (final Object item : list) {
 				Row row = new Row();
 				row.setStyle("cursor:hand;cursor:pointer;");
+
+				final Detail detail = new Detail();
+				row.getChildren().add(detail);
+				detail.addEventListener("onOpen", new EventListener<OpenEvent>() {
+
+					@Override
+					public void onEvent(OpenEvent e) throws Exception {
+						if (e.isOpen()) {
+							Include include = new Include();
+							include.setDynamicProperty("stepList", renderTccStepList(item.toString()));
+							include.setSrc("/zuls/tccTxStepDetail.zul");
+							include.invalidate();
+							detail.getChildren().clear();
+							detail.getChildren().add(include);
+						} else {
+
+						}
+					}
+				});
+
 				row.getChildren().add(new Label("" + i));
 				i++;
 				row.getChildren().add(new Label(item.toString()));
 				rows.getChildren().add(row);
 
-				row.addEventListener("onClick", new EventListener<Event>() {
-
+				/*row.addEventListener("onClick", new EventListener<ClickEvent>() {
+				
 					@Override
-					public void onEvent(Event arg0) throws Exception {
+					public void onEvent(ClickEvent arg0) throws Exception {
 						renderTccStepList(item.toString());
-
 					}
-
-				});
+				
+				});*/
 			}
 		}
 	}
 
-	List<EtfTccStep> stepList = new ArrayList<>();
-
-	private void renderTccStepList(String tccTxRecordKey) {
-		stepList.clear();
+	private List<EtfTccStep> renderTccStepList(String tccTxRecordKey) {
+		List<EtfTccStep> stepList = new ArrayList<>();
 		Set keys = redisTemplate.keys(EtfTccDaoRedis.ETF_TCC_KEYS.ETF_TCC_STEP + ":" + tccTxRecordKey + "*");
 		stepList.addAll(redisTemplate.opsForValue().multiGet(keys));
-		BindUtils.postNotifyChange(null, null, this, "stepList");
-	}
-
-	public List<EtfTccStep> getStepList() {
+		for (EtfTccStep s : stepList) {
+			JSONObject object = JSONObject.parseObject(s.getBizStateJson());
+			String jsonFormatStr = JSON.toJSONString(object, SerializerFeature.PrettyFormat,
+					SerializerFeature.WriteMapNullValue, SerializerFeature.WriteDateUseDateFormat);
+			s.setBizStateJson(jsonFormatStr);
+		}
 		return stepList;
 	}
+
 }
