@@ -92,7 +92,7 @@ public class TccTxListCtrl {
 				}
 				redisMessageListener.addCallback(callback);
 			} catch (DesktopUnavailableException | InterruptedException e) {
-				e.printStackTrace();
+				logger.error(e.getMessage(), e);
 			}
 
 			Executions.deactivate(desktop);
@@ -107,7 +107,6 @@ public class TccTxListCtrl {
 
 		desktop = Executions.getCurrent().getDesktop();
 		desktop.enableServerPush(true);
-		//		Executions.activate(Executions.getCurrent().getDesktop());
 
 		this.renderList(rowsSuccess, EtfTccDaoRedis.ETF_TCC_KEYS.ETF_TCC_SUCCESS_LIST.toString(), ":yyyy:MM:dd_:HH:mm");
 		this.renderList(rowsFailure, EtfTccDaoRedis.ETF_TCC_KEYS.ETF_TCC_CANCELED_LIST.toString(), ":yyyy:MM:dd_:HH");
