@@ -293,3 +293,4 @@ redis的“rpoplpush”指令可以非常简单可靠的实现这种协调机制
 * 参照示例代码开发和配置ETF组件
 * 参照示例，编写junit测试；
 * 参照ETF交易控制台运行说明，启动控制台服务，查看测试结果；或者直接在redis数据库查看结果；
+![控制台界面](https://github.com/VincentLiSH/elastic-transaction-framework/raw/master/ETFConsole/WebContent/images/console-ui.png )
