@@ -44,7 +44,7 @@ public class TxStateMachineDriver {
 				}
 			}
 		}
-		return null;
+		return result;
 	}
 
 	public void transfer(Class<? extends Enum> stateEnumClazz, String key, String actionCode) {
