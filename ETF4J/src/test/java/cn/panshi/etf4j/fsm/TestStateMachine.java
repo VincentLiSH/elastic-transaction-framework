@@ -31,7 +31,7 @@ public class TestStateMachine {
 		};
 	}
 	
-	@Ann4TxStateMachineAction(actionMemo="a23",from="s2",to="s3")
+	@Ann4TxStateMachineAction(actionMemo="a13",from="s1",to="s3")
 	public AbsTxStateMachineActionCallback a23() {
 		return new AbsTxStateMachineActionCallback (){
 			
@@ -48,7 +48,7 @@ public class TestStateMachine {
 		};
 	}
 	
-	@Ann4TxStateMachineAction(actionMemo="a34",from="s3",to="s4")
+	@Ann4TxStateMachineAction(actionMemo="a14",from="s1",to="s4")
 	public AbsTxStateMachineActionCallback a34() {
 		return new AbsTxStateMachineActionCallback (){
 			

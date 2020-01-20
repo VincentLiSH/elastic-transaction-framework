@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,12 +53,15 @@ public class TxStateMachineActionCallbackTest {
 
 		tsmdriver.transfer(TestEnum.class, key, "s2");
 		
-		tsmdriver.transfer(TestEnum.class, key, "s3");
-		
-		tsmdriver.transfer(TestEnum.class, key, "s4");
-
 		try {
-			tsmdriver.transfer(TestEnum.class, key, "s2");
+			tsmdriver.transfer(TestEnum.class, key, "s3");
+			Assert.fail("s2~s3 not available");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		try {
+			tsmdriver.transfer(TestEnum.class, key, "s4");
+			Assert.fail("s2~s3 not available");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
