@@ -41,6 +41,7 @@
 
 		<!-- Test libs -->
 		<dependency org="junit" name="junit" rev="4.12" conf="test->default" />
+		<dependency org="org.mockito" name="mockito-all" rev="1.9.5" conf="test->default" />
 		<dependency org="org.springframework" name="spring-test" rev="${spring.version}" conf="test->default" />
 
 	</dependencies>
