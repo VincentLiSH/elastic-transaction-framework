@@ -77,16 +77,19 @@ public class AbsPagingSortableTemplateTest {
 		logger.debug(result.getData().get(0));
 		Assert.assertEquals("33", result.getData().get(0).toString());
 		Assert.assertEquals(1, result.getPageNo());
+		Assert.assertEquals(13, result.getTotalCount());
 
 		result = query.executePagingOrderQuery(2);
 		logger.debug(result.getData().get(0));
 		Assert.assertEquals("30", result.getData().get(0).toString());
 		Assert.assertEquals(2, result.getPageNo());
+		Assert.assertEquals(13, result.getTotalCount());
 
 		result = query.executePagingOrderQuery(3);
 		logger.debug(result.getData().get(0));
 		Assert.assertEquals("30", result.getData().get(0).toString());
 		Assert.assertEquals(2, result.getPageNo());
+		Assert.assertEquals(13, result.getTotalCount());
 	}
 
 	class MockDao {

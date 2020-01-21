@@ -29,12 +29,18 @@ public abstract class AbsPagingSortableTemplate<T_criteria, T_result_item> {
 		this.defaultOrderByAscFlag = defaultOrderByAscFlag == null ? true : defaultOrderByAscFlag;
 	}
 
+	/**
+	 * memo:分页查询逻辑入口
+	 * @param pageNo 要查询的页号
+	 * @return PagingSearchResult：totalCount总记录数，data当前页数据集合，pageNo当前页号
+	 */
 	public final PagingSearchResult<T_result_item> executePagingOrderQuery(int pageNo) {
 		PagingSearchResult<T_result_item> result = new PagingSearchResult<>();
 
 		T_criteria criteria = this.constructCriteria();
 
 		int totalRecords = this.countTotalByCriteria(criteria);
+		result.setTotalCount(totalRecords);
 		if (totalRecords == 0) {
 			result.setPageNo(0);
 			return result;
