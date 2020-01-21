@@ -10,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-@SuppressWarnings("unchecked")
 public class AbsPagingSortableTemplateTest {
 	Logger logger = Logger.getLogger(AbsPagingSortableTemplateTest.class);
 	MockDao dao;
@@ -36,7 +35,7 @@ public class AbsPagingSortableTemplateTest {
 			}
 
 			@Override
-			protected int queryCountTotal(String criteria) {
+			protected int countTotalByCriteria(String criteria) {
 				String sql = "select count(1) " + criteria;
 				return dao.countBySql(sql);
 			}
@@ -52,8 +51,8 @@ public class AbsPagingSortableTemplateTest {
 			}
 
 			@Override
-			protected List<Integer> doPagingSortQuery(String criteria, int queryIndex, int pageSize, String orderBy,
-					boolean orderByAscFlag) {
+			protected List<Integer> doPagingAndSortQueryByCriteria(String criteria, int queryIndex, int pageSize,
+					String orderBy, boolean orderByAscFlag) {
 				String sql = "select age " + criteria;
 				if (StringUtils.isNotBlank(orderBy)) {
 					sql += " order by " + orderBy + " " + (orderByAscFlag ? "asc" : "desc");
